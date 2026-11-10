@@ -13,7 +13,8 @@ extra="""<style>
 body=rd(HERE,'body.html').replace('%%CLIENT%%', html.escape(rd(ROOT,'kit','asd_client.py'), quote=False)).replace('%%BATCH%%', html.escape(rd(ROOT,'kit','asd_batch.py'), quote=False))
 data=json.dumps(json.loads(rd(HERE,'data.json')), ensure_ascii=False).replace('</','<\\/')
 js=rd(HERE,'script.js')
-fav='<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2312263A%22/%3E%3Cpath d=%22M32 14v26M22 30l10 10 10-10M18 48h28%22 stroke=%22%23049FD9%22 stroke-width=%225%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">'
+fav='''<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22 width=%2264%22 height=%2264%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2312263A%22/%3E%3Cg stroke=%22%23049FD9%22 stroke-width=%224%22 stroke-linecap=%22round%22%3E%3Cline x1=%2232%22 y1=%2218%22 x2=%2218%22 y2=%2244%22/%3E%3Cline x1=%2232%22 y1=%2218%22 x2=%2246%22 y2=%2244%22/%3E%3Cline x1=%2218%22 y1=%2244%22 x2=%2246%22 y2=%2244%22/%3E%3C/g%3E%3Cg fill=%22%23049FD9%22%3E%3Ccircle cx=%2232%22 cy=%2218%22 r=%227%22/%3E%3Ccircle cx=%2218%22 cy=%2244%22 r=%227%22/%3E%3Ccircle cx=%2246%22 cy=%2244%22 r=%227%22/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">'''
 doc=f"""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
