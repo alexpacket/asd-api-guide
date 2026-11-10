@@ -1,0 +1,454 @@
+<header class="site"><div class="in">
+<a class="brand" href="#top"><b>Cisco<span>SE</span></b><small>Field reference</small></a>
+<nav aria-label="Guide parts"><a href="#overview" data-part="Foundations">Foundations</a><a href="#quickstart" data-part="Workflow">Workflow</a><a href="#suggestion" data-part="Companions">Companions</a><a href="#errors" data-part="Operate">Operate</a></nav>
+<button type="button" class="pill" id="theme-toggle">Theme: system</button>
+</div></header>
+<div class="hero" id="top"><div class="in">
+  <p class="eyebrow">Field guide · Automated Software Distribution API v4.0 · Cisco Support APIs</p>
+  <h1>Cisco Automated Software Distribution API</h1>
+  <p class="lead">Download Cisco software from a script instead of the website: get API access, find the right image for a device, clear any license gates, then fetch the file and verify its checksum. It also covers when Catalyst Center or Intersight should do the job instead.</p>
+  <p class="meta"><b>Scope:</b> ASD (Automated Software Distribution) v4.0 at <code style="background:#0B1622;color:#fff">apix.cisco.com/software/v4.0</code>, plus the companion Software Suggestion v2 and Product Information APIs.</p>
+  <div class="hbtns"><a class="hbtn solid" href="#usecases">Start with the use cases</a><a class="hbtn" href="#quickstart">Deploy in five steps</a></div>
+  <nav class="tiles" aria-label="Quick links">
+    <a href="#quickstart"><b>Deploy in five steps</b><span>From access to a scheduled job</span></a>
+    <a href="#builder"><b>Request builder</b><span>Fill in a PID, get the exact calls</span></a>
+    <a href="#client"><b>Python client</b><span>Tested end to end against a mock</span></a>
+    <a href="#errors"><b>Error lookup</b><span>Type a code, get the fix</span></a>
+    <a href="#choose"><b>Which path?</b><span>ASD direct, Catalyst Center or Intersight</span></a>
+    <a href="#usecases"><b>Use cases</b><span>Six customer playbooks</span></a>
+  </nav>
+</div></div>
+<div class="layout">
+<aside class="side" aria-label="Sections"><details open><summary>Contents</summary>
+<p class="nav-part">Foundations</p><ul><li><a href="#overview" data-part="Foundations">What ASD is</a></li><li><a href="#usecases" data-part="Foundations">Use cases</a></li><li><a href="#claimcheck" data-part="Foundations">Claim check</a></li><li><a href="#access" data-part="Foundations">Entitlement and onboarding</a></li><li><a href="#auth" data-part="Foundations">Authentication</a></li></ul>
+<p class="nav-part">Workflow</p><ul><li><a href="#quickstart" data-part="Workflow">Deploy in five steps</a></li><li><a href="#flow" data-part="Workflow">End-to-end flow</a></li><li><a href="#metadata" data-part="Workflow">Find images (metadata)</a></li><li><a href="#compliance" data-part="Workflow">EULA and K9</a></li><li><a href="#download" data-part="Workflow">Get the file</a></li><li><a href="#builder" data-part="Workflow">Request builder</a></li><li><a href="#client" data-part="Workflow">Python client</a></li></ul>
+<p class="nav-part">Companions</p><ul><li><a href="#suggestion" data-part="Companions">Software Suggestion v2</a></li><li><a href="#productinfo" data-part="Companions">Product Information</a></li><li><a href="#controllers" data-part="Companions">Catalyst Center and Intersight</a></li><li><a href="#choose" data-part="Companions">Which path?</a></li></ul>
+<p class="nav-part">Operate</p><ul><li><a href="#errors" data-part="Operate">Errors and exceptions</a></li><li><a href="#limits" data-part="Operate">Quotas and limits</a></li><li><a href="#quirks" data-part="Operate">Documentation quirks</a></li><li><a href="#checklist" data-part="Operate">Guidance checklist</a></li><li><a href="#figures" data-part="Operate">Figure index</a></li><li><a href="#sources" data-part="Operate">Sources</a></li></ul></details>
+<div class="legend"><div><span class="sw" style="background:var(--accent)"></span>Metadata call (read only)</div><div><span class="sw" style="background:var(--amber)"></span>Leaves Cisco's API tier (download servers)</div><div><span class="sw" style="background:var(--green)"></span>Lands in your environment</div></div></aside>
+<main>
+
+<section id="overview"><p class="eyebrow">Foundations</p><h2>What ASD is, and what it is not</h2>
+<p>ASD is one of the Cisco Support APIs: a REST (Representational State Transfer) API with JSON (JavaScript Object Notation) bodies that returns software metadata for a device and then a short-lived, per-session download URL for the image. It does what a person does on the software download site (pick a release, read the checksum, accept the license, click download), but from a script, a pipeline or an image-management tool.</p>
+<div class="stats">
+  <div><b>8</b><span>operations, all under <code>/software/v4.0</code></span></div>
+  <div><b>60 min</b><span>life of a <code>metadataTransId</code> and of a download URL</span></div>
+  <div><b>1–5</b><span>image GUIDs (Globally Unique Identifiers) per download call</span></div>
+  <div><b>3,600 s</b><span>default OAuth 2.0 access-token lifetime</span></div>
+</div>
+<figure class="fig" id="fig-0"><div class="fig-scroll"><svg viewBox="0 0 760 430" role="img" aria-label="Where ASD sits: your pipeline gets a token from id.cisco.com, calls ASD on apix.cisco.com, downloads from Cisco download servers into your repository" class="dg"><defs>
+<marker id="f0-n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-n"/></marker>
+<marker id="f0-read" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-read"/></marker>
+<marker id="f0-dev" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-dev"/></marker>
+<marker id="f0-write" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-write"/></marker>
+<marker id="f0-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-acc"/></marker></defs>
+<rect x="270" y="16" width="220" height="50" rx="8" class="b-n"/><text x="380" y="38" text-anchor="middle" class="t">Your pipeline or script</text><text x="380" y="55" text-anchor="middle" class="s">Python, Ansible, CI/CD job</text>
+<rect x="16" y="120" width="200" height="66" rx="8" class="b-acc"/><text x="116" y="142" text-anchor="middle" class="t">Cisco identity service</text><text x="116" y="159" text-anchor="middle" class="sm">id.cisco.com</text><text x="116" y="175" text-anchor="middle" class="s">OAuth 2.0 client credentials</text>
+<rect x="270" y="120" width="220" height="80" rx="8" class="b-read"/><text x="380" y="142" text-anchor="middle" class="t">ASD API v4.0</text><text x="380" y="160" text-anchor="middle" class="sm">apix.cisco.com/software/v4.0</text><text x="380" y="176" text-anchor="middle" class="s">metadata · compliance · download</text><text x="380" y="191" text-anchor="middle" class="s">entitlement checked per call</text>
+<rect x="544" y="120" width="200" height="80" rx="8" class="b-read"/><text x="644" y="142" text-anchor="middle" class="t">Companion Support APIs</text><text x="644" y="160" text-anchor="middle" class="s">Software Suggestion v2</text><text x="644" y="176" text-anchor="middle" class="s">Product Information</text><text x="644" y="191" text-anchor="middle" class="s">(which release, which MDF ID)</text>
+<rect x="270" y="250" width="220" height="66" rx="8" class="b-dev"/><text x="380" y="272" text-anchor="middle" class="t">Cisco download servers</text><text x="380" y="289" text-anchor="middle" class="s">sessionalized URL, 60 minutes</text><text x="380" y="305" text-anchor="middle" class="s">cloud store: one or more 302s</text>
+<rect x="270" y="356" width="220" height="58" rx="8" class="b-write"/><text x="380" y="379" text-anchor="middle" class="t">Your image repository</text><text x="380" y="397" text-anchor="middle" class="s">SHA-512 verified before use</text>
+<rect x="544" y="356" width="200" height="58" rx="8" class="b-n"/><text x="644" y="379" text-anchor="middle" class="t">Network devices</text><text x="644" y="397" text-anchor="middle" class="s">your upgrade tooling installs</text>
+<rect x="16" y="250" width="200" height="96" rx="8" class="b-off"/><text x="116" y="272" text-anchor="middle" class="t">Controllers fetch on their own</text><text x="116" y="292" text-anchor="middle" class="s">Catalyst Center: ccoSync and</text><text x="116" y="307" text-anchor="middle" class="s">images/{id}/download</text><text x="116" y="327" text-anchor="middle" class="s">Intersight: firmware repository</text>
+<path d="M300 66 L170 120" class="a-acc" marker-end="url(#f0-acc)"/><text x="214" y="88" text-anchor="middle" class="l">1 token</text>
+<path d="M380 66 V120" class="a-read" marker-end="url(#f0-read)"/><text x="388" y="98" class="l">2 Bearer calls</text>
+<path d="M470 66 L600 120" class="a-read dsh" marker-end="url(#f0-read)"/><text x="560" y="88" text-anchor="middle" class="l">optional</text>
+<path d="M380 200 V250" class="a-dev" marker-end="url(#f0-dev)"/><text x="388" y="230" class="l">3 download URL</text>
+<path d="M380 316 V356" class="a-write" marker-end="url(#f0-write)"/><text x="388" y="341" class="l">4 file + checksum</text>
+<path d="M490 385 H544" class="a-n" marker-end="url(#f0-n)"/>
+</svg></div><figcaption><b>Figure 0.</b> Where ASD sits. ASD never touches your devices: it hands your tooling a file and the checksum to verify it. Controllers such as Catalyst Center and Intersight have their own cisco.com connection and are covered under Companions.</figcaption></figure>
+<div class="uw"><div class="uw-y"><h4>Use ASD when</h4><ul><li>You run your own image repository or CI/CD (continuous integration and delivery) pipeline</li><li>You need checksums and release metadata in a CMDB (configuration management database) or compliance report</li><li>You build a tool for many platforms that no single controller manages</li></ul></div><div class="uw-n"><h4>Prefer something else when</h4><ul><li>The devices are already managed by Catalyst Center or Intersight: let the controller fetch the image</li><li>You only need to know which release to run: Software Suggestion v2 answers that without a download</li><li>The account has no SNTC or PSS entitlement: the calls will not be authorized</li></ul></div></div>
+</section>
+
+<section id="usecases"><p class="eyebrow">Foundations</p><h2>Use cases</h2>
+<p>Six ways customers put ASD to work. Each card says who runs it, how often, the steps and what the customer gets at the end. Start with the first one: it is the base the others build on.</p>
+<div class="pbs">
+<div class="pb"><h3>1. Keep an approved image repository current</h3><p class="pb-o">Who: network automation or platform team · Runs: nightly or weekly</p>
+<ol class="chain"><li>Choose targets (Software Suggestion or your standards)</li><li>Plan file of PIDs and targets</li><li>ASD metadata and download</li><li>SHA-512 check</li><li>File and .sha512 into the repository</li></ol>
+<p><b>Outcome:</b> every platform in the estate has its approved image on an internal server, already verified, before anyone opens a change. Script: <a href="#quickstart">asd_batch.py</a>.</p></div>
+<div class="pb"><h3>2. Build the upgrade kit for a change request</h3><p class="pb-o">Who: change owner or NOC (network operations center) · Runs: per change</p>
+<ol class="chain"><li><code>/metadata/pidrelease</code> for the affected PIDs</li><li>Collect release, size, SHA-512, minimum DRAM and flash</li><li>Add release-note and advisory links</li><li>Attach to the ticket</li></ol>
+<p><b>Outcome:</b> the change record carries the exact file, checksum and memory prerequisites, so reviewers approve against facts and engineers stage the same file that was approved.</p></div>
+<div class="pb"><h3>3. Audit images already in the field</h3><p class="pb-o">Who: security or compliance · Runs: monthly or after an incident</p>
+<ol class="chain"><li>Export image file names and hashes from inventory</li><li><code>/metadata/images</code>, five names per call</li><li>Compare SHA-512, flag <code>isDeleted</code></li><li>For advisories, <code>/metadata/pidimage</code> per PID</li></ol>
+<p><b>Outcome:</b> a report of devices running images Cisco has removed from download, any file whose hash does not match Cisco's published value and, from the per-PID call, images with a software advisory, deferral notice or PSIRT flag.</p></div>
+<div class="pb"><h3>4. Stage software for an air-gapped or high-security site</h3><p class="pb-o">Who: OT (operational technology), government or regulated sites · Runs: per release</p>
+<ol class="chain"><li>Download and verify in a connected zone</li><li>Carry file and .sha512 across the gap</li><li>Re-verify with <code>sha512sum -c</code> inside</li></ol>
+<p><b>Outcome:</b> a documented chain of custody: the hash checked on the inside is the hash Cisco published.</p></div>
+<div class="pb"><h3>5. Feed lifecycle data to other tools</h3><p class="pb-o">Who: CMDB, NetBox or ServiceNow owners · Runs: daily</p>
+<ol class="chain"><li>Metadata per PID</li><li>Store <code>isSuggested</code>, <code>lifeCycle</code>, <code>psirtIndicator</code>, advisories, <code>fcsDate</code></li><li>Join to inventory</li></ol>
+<p><b>Outcome:</b> dashboards that show which platforms are behind the suggested release or carry a security advisory, without anyone browsing the download site.</p></div>
+<div class="pb"><h3>6. Cover platforms no controller manages</h3><p class="pb-o">Who: teams with mixed estates (firewalls, routers, optics, appliances) · Runs: as needed</p>
+<p>Catalyst Center and Intersight fetch images for what they manage. ASD covers the rest with one workflow, so the repository and audit in use cases 1 and 3 can include every Cisco platform the contract covers.</p></div>
+</div>
+</section>
+<section id="claimcheck"><p class="eyebrow">Foundations</p><h2>Claim check: what circulating write-ups get wrong</h2>
+<p>A widely shared AI-generated summary of this API had the concept right and most of the specifics wrong. The table compares its claims with Cisco's v4.0 reference. If you inherited code or slides built from that summary, these are the places to fix.</p>
+<div class="tbl"><table><thead><tr><th>Claim in the summary</th><th>Verdict</th><th>What the v4.0 reference says</th></tr></thead><tbody>
+<tr><td>ASD is part of the Cisco Support APIs on DevNet</td><td><span class="bdg bdg-write">Correct</span></td><td>Listed first in the Support APIs portfolio.</td></tr>
+<tr><td>Token from <code>id.cisco.com/oauth2/default/v1/token</code>, client credentials grant</td><td><span class="bdg bdg-write">Correct</span></td><td>Same endpoint and grant. The older <code>cloudsso.cisco.com/as/token.oauth2</code> applies only to apps registered before 1 March 2023 and is being deprecated.</td></tr>
+<tr><td>Needs SNTC or PSS, registered in the API Console</td><td><span class="bdg bdg-write">Correct</span></td><td>Smart Net Total Care customers and Partner Support Service partners only; the API user also needs the API Developer role.</td></tr>
+<tr><td>"Internal Cisco engineering entitlements" grant access</td><td><span class="bdg" style="background:var(--red-soft);color:var(--red)">Unsupported</span></td><td>No Cisco documentation says so. The API Console does list an "Automated Software Distribution Preview-V3" entry (released 21 Nov 2024) with a Request Access button and no documentation; requests go to swc-it-support@cisco.com.</td></tr>
+<tr><td><code>GET /software/releases/v1/pid/{pid}</code></td><td><span class="bdg" style="background:var(--red-soft);color:var(--red)">Wrong</span></td><td><code>POST /software/v4.0/metadata/pidrelease</code> with a JSON body. The PID goes in the body, not the path.</td></tr>
+<tr><td><code>GET /software/image/v1/imageName/{name}</code></td><td><span class="bdg" style="background:var(--red-soft);color:var(--red)">Wrong</span></td><td><code>POST /metadata/pidimage</code> (PID plus 1–5 image names) or <code>POST /metadata/images</code> (names only).</td></tr>
+<tr><td><code>GET /software/download/v1/image/{name}/eulaAccept/true</code></td><td><span class="bdg" style="background:var(--red-soft);color:var(--red)">Wrong</span></td><td><code>POST /download/pidimage</code> with <code>pid</code>, <code>mdfId</code>, <code>imageGuids</code> and <code>metadataTransId</code>. EULA and K9 acceptance are separate <code>/compliance/eula</code> and <code>/compliance/k9</code> calls.</td></tr>
+<tr><td>Response <code>{"downloadUrl", "imageName", "expiryTime"}</code></td><td><span class="bdg" style="background:var(--red-soft);color:var(--red)">Wrong</span></td><td><code>downloads[]</code> entries with <code>url</code>, <code>token</code>, <code>imageGuid</code>, <code>imageName</code>, <code>exception[]</code>, plus a top-level <code>sessionId</code>. No expiry field; the URL lives 60 minutes.</td></tr>
+<tr><td>Checksums come with the image-details call</td><td><span class="bdg bdg-dev">Partly</span></td><td>MD5 and SHA-512 come from the three metadata calls, never from the download call.</td></tr>
+<tr><td>ASD returns Gold Star / suggested releases</td><td><span class="bdg bdg-dev">Partly</span></td><td>ASD flags <code>isSuggested</code> per release. Ranked suggestions come from the separate Software Suggestion v2 API.</td></tr>
+<tr><td>Catalyst Center <code>POST /dna/intent/api/v1/image/importation/source/cisco</code></td><td><span class="bdg" style="background:var(--red-soft);color:var(--red)">Wrong</span></td><td>No such path. Imports are <code>/image/importation/source/url</code> and <code>/source/file</code>; cisco.com images use <code>/images/ccoSync</code> then <code>/images/{id}/download</code>.</td></tr>
+<tr><td>Intersight <code>firmware/Distributables</code> and <code>firmware/Upgrades</code> also upgrade Nexus fabric</td><td><span class="bdg bdg-dev">Partly</span></td><td>Both objects exist and drive UCS (Unified Computing System) server and fabric-interconnect firmware. Nothing found supports Nexus switch upgrades through them.</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="access"><p class="eyebrow">Foundations</p><h2>Entitlement and onboarding</h2>
+<p>Access is gated twice: once to reach the API at all, and again on every download, against the contracts on the Cisco.com profile behind the app. Most failed ASD projects stall here, not in code.</p>
+<ol class="chain"><li>SNTC or PSS contract</li><li>API Developer role (CSAM)</li><li>Register app in API Console</li><li>Add "Automated Software Distribution"</li><li>Contracts on the Cisco.com profile</li><li>Software download access (ART)</li></ol>
+<div class="tbl"><table><thead><tr><th>Step</th><th>Customer (SNTC)</th><th>Partner (PSS)</th></tr></thead><tbody>
+<tr><td>1. Entitlement</td><td>Smart Net Total Care. Complete the SNTC portal onboarding guide.</td><td>Partner Support Service. The partner must hold at least one valid SNTC contract with the customer organization it acts for.</td></tr>
+<tr><td>2. API role</td><td>The company's Delegated Administrator grants the API Developer role in CSAM (Cisco Services Access Management).</td><td>Request access to PSS APIs and the API Console from the PSS community page, quoting a PSS contract number. A TAC engineer grants it; allow up to 48 hours.</td></tr>
+<tr><td>3. App registration</td><td colspan="2">Cisco API Console (<code>apiconsole.cisco.com</code>) &gt; My Apps &amp; Keys &gt; Register a New App &gt; OAuth 2.0 grant <b>Client Credentials</b> only &gt; select the Support APIs. The Client ID and Secret do not expire but can be regenerated; treat them like a password.</td></tr>
+<tr><td>4. ASD visible?</td><td colspan="2">ASD must appear under Select APIs on the Register a New App form before your app can be given access. If it is missing, the role or entitlement is not in place yet. The console's documentation list also has an "Automated Software Distribution Preview-V3" entry (released 21 Nov 2024, no documentation) with a Request Access button; ask swc-it-support@cisco.com which entry applies to you before requesting.</td></tr>
+<tr><td>5. Download entitlement</td><td colspan="2">Each registration carries the identity and permissions of the API user who created it. Images that need a contract return metadata but no URL until the contract is on that user's Cisco.com profile (Profile Manager).</td></tr>
+<tr><td>6. Software download access</td><td colspan="2">Contract-registered software can return <code>IAC_ERROR</code> until the user is granted Software Download Access through Cisco's ART access-request site (edsart.cloudapps.cisco.com): Cisco Service &gt; Connected Experience (CX) &gt; Delivery &amp; Tools Support &gt; Software Download and Special File Publishing Access.</td></tr>
+</tbody></table></div>
+<p class="note amber"><b>Use a dedicated Cisco.com identity for automation.</b> Downloads are authorized against the profile behind the app, so a personal login means the pipeline breaks when that person leaves or their contract associations change.</p>
+</section>
+
+<section id="auth"><p class="eyebrow">Foundations</p><h2>Authentication</h2>
+<p>One OAuth 2.0 client-credentials request returns a Bearer token that every Support API accepts. The token lasts 3,600 seconds by default; cache it and renew a few minutes early rather than per call.</p>
+<div class="code"><div class="code-h"><span>Shell · get an access token</span><button type="button" class="copy">Copy</button></div><pre><code>curl -s -X POST https://id.cisco.com/oauth2/default/v1/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=client_credentials" \
+  --data-urlencode "client_id=$CISCO_CLIENT_ID" \
+  --data-urlencode "client_secret=$CISCO_CLIENT_SECRET"
+
+# 200 OK
+# {"access_token": "Er2cdpFDGNsQ...", "token_type": "Bearer", "expires_in": 3599}</code></pre></div>
+<div class="tbl"><table><thead><tr><th>Item</th><th>Detail</th></tr></thead><tbody>
+<tr><td>Token endpoint</td><td><code>POST https://id.cisco.com/oauth2/default/v1/token</code>, form-encoded <code>grant_type</code>, <code>client_id</code>, <code>client_secret</code></td></tr>
+<tr><td>API host</td><td><code>apix.cisco.com</code>. Older posts and code use <code>api.cisco.com</code>, which was replaced in the same migration.</td></tr>
+<tr><td>Header</td><td><code>Authorization: Bearer &lt;access_token&gt;</code> and <code>Content-Type: application/json</code> for the POST bodies</td></tr>
+<tr><td>Legacy endpoint</td><td><code>cloudsso.cisco.com/as/token.oauth2</code>: apps registered before 1 March 2023 only, being deprecated. The API Console's Migrating Applications page says to re-register those apps (new Client ID and Secret), switch to the <code>id.cisco.com</code> token URL, and change <code>api.cisco.com</code> to <code>apix.cisco.com</code>.</td></tr>
+<tr><td>Download links</td><td>The same access token is appended to non-cloud download URLs as <code>&amp;access_token=</code>. Keep it out of logs.</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="quickstart"><p class="eyebrow">Workflow</p><h2>Deploy it in five steps</h2>
+<p>For a customer standing up ASD automation for the first time. Steps 1 and 2 are paperwork and can take a few days; steps 3 to 5 take an afternoon.</p>
+<div class="pbs">
+<div class="pb"><h3>Step 1 · Confirm access</h3><p>Check the customer has SNTC (or works through a PSS partner) and that the automation's Cisco.com identity has the API Developer role and the right contracts on its profile. See <a href="#access">Entitlement and onboarding</a>.</p><p class="pb-o">Done when: "Automated Software Distribution" is selectable on the API Console's Register a New App form.</p></div>
+<div class="pb"><h3>Step 2 · Register the app</h3><p>API Console &gt; My Apps &amp; Keys &gt; Register a New App. Application type <b>Service</b>, grant type <b>Client Credentials</b>, APIs: Automated Software Distribution and Software Suggestion API V2.</p><p class="pb-o">Done when: you have a Client ID and Client Secret.</p></div>
+<div class="pb"><h3>Step 3 · Store the secret and test one PID</h3><p>Put the ID and secret in the customer's secrets store (vault, CI variables), never in code. Run the <a href="#client">Python client</a> against one PID the customer owns.</p>
+<div class="code"><div class="code-h"><span>Shell · first test</span><button type="button" class="copy">Copy</button></div><pre><code>pip install requests
+export CISCO_CLIENT_ID=…  CISCO_CLIENT_SECRET=…
+python asd_client.py C9300-48P 17.9.4</code></pre></div>
+<p class="pb-o">Done when: the image downloads and prints "SHA-512 verified". If it prints exception codes instead, look them up in <a href="#errors">Errors and exceptions</a>.</p></div>
+<div class="pb"><h3>Step 4 · Write the plan file and run the batch</h3><p>One row per platform: the PID, the release it runs today, and the target. The batch script downloads each approved image once, verifies it, writes a <code>.sha512</code> file beside it, and prints a JSON report. It exits non-zero if anything was blocked or failed, so a scheduler can alert.</p>
+<div class="code"><div class="code-h"><span>CSV · plan.csv</span><button type="button" class="copy">Copy</button></div><pre><code>pid,current_release,target
+C9300-48P,17.9.4,latest
+C9500-48Y4C,17.9.4,17.12.6
+ISR4451-X/K9,17.6.5,above</code></pre></div>
+<div class="code"><div class="code-h"><span>Python 3 · asd_batch.py (same folder as asd_client.py)</span><button type="button" class="copy">Copy</button></div><pre><code>%%BATCH%%</code></pre></div>
+<p class="pb-o">Tested against the same local mock as the client: download, verification, and skip-if-present on a second run.</p></div>
+<div class="pb"><h3>Step 5 · Schedule it and watch the report</h3><p>Run nightly from cron or the CI system, keep the JSON report, and alert on <code>blocked</code>, <code>error</code> or <code>checksum mismatch</code>. Blocked usually means a contract, EULA or K9 action for a person, not a code fix.</p>
+<div class="code"><div class="code-h"><span>Shell · crontab entry (02:15 daily)</span><button type="button" class="copy">Copy</button></div><pre><code>15 2 * * * cd /opt/asd &amp;&amp; ASD_REPO=/srv/images python3 asd_batch.py plan.csv &gt; report-$(date +\%F).json 2&gt;&amp;1 || /opt/asd/alert.sh</code></pre></div>
+<p class="pb-o">Done when: a night's run leaves new images and a clean report, and a forced failure (a bad PID) raises an alert.</p></div>
+</div>
+</section>
+<section id="flow"><p class="eyebrow">Workflow</p><h2>End-to-end flow</h2>
+<p>From token to verified file: three API calls and a file download, plus one or two compliance calls if a license gate is open. Step through to see each request and response; the packet follows the call you select.</p>
+<figure class="fig" id="fig-1"><div class="fig-scroll"><svg viewBox="0 0 760 452" role="img" aria-label="Sequence: token, metadata, optional EULA or K9, download URL, file download, checksum" class="dg" id="seq"><defs>
+<marker id="f1-n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-n"/></marker>
+<marker id="f1-read" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-read"/></marker>
+<marker id="f1-dev" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-dev"/></marker>
+<marker id="f1-write" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-write"/></marker>
+<marker id="f1-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-acc"/></marker></defs>
+<line x1="95" y1="46" x2="95" y2="446" class="life"/><rect x="20" y="12" width="150" height="34" rx="8" class="b-n"/><text x="95" y="34" text-anchor="middle" class="t">Your client</text>
+<line x1="285" y1="46" x2="285" y2="446" class="life"/><rect x="210" y="12" width="150" height="34" rx="8" class="b-acc"/><text x="285" y="34" text-anchor="middle" class="t">id.cisco.com</text>
+<line x1="475" y1="46" x2="475" y2="446" class="life"/><rect x="400" y="12" width="150" height="34" rx="8" class="b-read"/><text x="475" y="34" text-anchor="middle" class="t">ASD API</text>
+<line x1="665" y1="46" x2="665" y2="446" class="life"/><rect x="590" y="12" width="150" height="34" rx="8" class="b-dev"/><text x="665" y="34" text-anchor="middle" class="t">Download server</text>
+<g class="st" data-i="0"><rect x="95" y="58" width="190" height="32" class="hit"/><path d="M99 80 H280" class="a-acc" marker-end="url(#f1-acc)"/><text x="190" y="73" text-anchor="middle" class="lm">POST /oauth2/default/v1/token</text></g>
+<g class="st" data-i="1"><rect x="95" y="96" width="190" height="32" class="hit"/><path d="M281 118 H100" class="a-acc dsh" marker-end="url(#f1-acc)"/><text x="190" y="111" text-anchor="middle" class="l">access_token · expires_in 3599</text></g>
+<g class="st" data-i="2"><rect x="95" y="134" width="380" height="32" class="hit"/><path d="M99 156 H470" class="a-read" marker-end="url(#f1-read)"/><text x="285" y="149" text-anchor="middle" class="lm">POST /metadata/pidrelease</text></g>
+<g class="st" data-i="3"><rect x="95" y="172" width="380" height="32" class="hit"/><path d="M471 194 H100" class="a-read dsh" marker-end="url(#f1-read)"/><text x="285" y="187" text-anchor="middle" class="l">metadataTransId · mdfId · imageGuid · sha512</text></g>
+<g class="st" data-i="4"><rect x="95" y="210" width="380" height="32" class="hit"/><path d="M99 232 H470" class="a-n dsh" marker-end="url(#f1-n)"/><text x="285" y="225" text-anchor="middle" class="lm">/compliance/eula · /compliance/k9 (if gated)</text></g>
+<g class="st" data-i="5"><rect x="95" y="248" width="380" height="32" class="hit"/><path d="M99 270 H470" class="a-read" marker-end="url(#f1-read)"/><text x="285" y="263" text-anchor="middle" class="lm">POST /download/pidimage</text></g>
+<g class="st" data-i="6"><rect x="95" y="286" width="380" height="32" class="hit"/><path d="M471 308 H100" class="a-read dsh" marker-end="url(#f1-read)"/><text x="285" y="301" text-anchor="middle" class="l">downloads[].url (60 min) · token · sessionId</text></g>
+<g class="st" data-i="7"><rect x="95" y="324" width="570" height="32" class="hit"/><path d="M99 346 H660" class="a-dev" marker-end="url(#f1-dev)"/><text x="380" y="339" text-anchor="middle" class="lm">GET url&amp;access_token=…  or  POST X-Authentication-Control=token</text></g>
+<g class="st" data-i="8"><rect x="95" y="362" width="570" height="32" class="hit"/><path d="M661 384 H100" class="a-dev dsh" marker-end="url(#f1-dev)"/><text x="380" y="377" text-anchor="middle" class="l">302 … 302 … 200 image bytes</text></g>
+<g class="st" data-i="9"><rect x="80" y="400" width="300" height="40" class="hit"/><path d="M99 408 h32 v18 h-28" class="a-write" marker-end="url(#f1-write)"/><text x="140" y="422" class="l">SHA-512 of file = sha512 from step 4</text></g>
+</svg></div><div class="stepbar" data-fig="seq" role="group" aria-label="Step through this flow"><button type="button" class="sbtn" data-act="prev">Back</button><button type="button" class="sbtn solid" data-act="next">Step through</button><button type="button" class="sbtn" data-act="all">Show all</button><span class="scount" aria-live="polite">All steps shown</span></div><div class="steppanel" data-fig="seq" aria-live="polite" hidden><p class="sp-t"></p><p class="sp-d"></p><pre class="sp-c"><code></code></pre></div><figcaption><b>Figure 1.</b> The full download sequence. Steps 3 to 6 must finish within 60 minutes, because the download call needs a live <code>metadataTransId</code>. Step 5 happens only when the metadata or download response asks for it.</figcaption></figure>
+</section>
+
+<section id="metadata"><p class="eyebrow">Workflow</p><h2>Find images: the three metadata calls <span class="bdg bdg-read">Read only</span></h2>
+<p>All three return the image names, sizes and checksums. The first two also return the <code>metadataTransId</code> and <code>mdfId</code> (Cisco's product catalog ID, from the Metadata Framework) that the download call needs. Pick the call by what you already know.</p>
+<div class="tbl"><table><thead><tr><th>Operation</th><th>You know</th><th>Body (fields as in Cisco's samples)</th><th>Returns a metadataTransId?</th></tr></thead><tbody>
+<tr><td><code>POST /software/v4.0/metadata/pidrelease</code></td><td>The PID and its current release</td><td><code>pid</code>, <code>currentReleaseVersion</code>, <code>outputReleaseVersion</code> (<code>latest</code>, <code>above</code> or a specific release), <code>pageIndex</code>, <code>perPage</code> (max 25)</td><td>Yes</td></tr>
+<tr><td><code>POST /software/v4.0/metadata/pidimage</code></td><td>The PID and the exact image file names</td><td><code>pid</code>, <code>imageNames</code> (array, 1–5), <code>pageIndex</code>, <code>perPage</code>. Unknown names come back in <code>invalidImages</code></td><td>Yes</td></tr>
+<tr><td><code>POST /software/v4.0/metadata/images</code></td><td>Only file names (for example from a device inventory)</td><td><code>imageNames</code> (array, 1–5)</td><td>No: status, dates, size and checksums only</td></tr>
+</tbody></table></div>
+<div class="code"><div class="code-h"><span>Request · metadata by PID and release</span><button type="button" class="copy">Copy</button></div><pre><code>POST https://apix.cisco.com/software/v4.0/metadata/pidrelease
+Authorization: Bearer &lt;access_token&gt;
+Content-Type: application/json
+
+{
+  "pid": "C9300-48P",
+  "currentReleaseVersion": "17.9.4",
+  "outputReleaseVersion": "latest",
+  "pageIndex": "1",
+  "perPage": "25"
+}</code></pre></div>
+<figure class="fig" id="fig-2"><div class="fig-scroll"><svg viewBox="0 0 760 388" role="img" aria-label="The metadata response is six levels deep: metadata, products, softwareTypes, operatingSystems, releases, images" class="dg"><defs>
+<marker id="f2-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-acc"/></marker></defs>
+<rect x="16" y="14" width="420" height="48" rx="8" class="b-read"/><text x="30" y="34" class="t">metadata[ ]</text><text x="30" y="51" class="sm">pid</text>
+<rect x="44" y="72" width="420" height="48" rx="8" class="b-read"/><text x="58" y="92" class="t">products[ ]</text><text x="58" y="109" class="sm">mdfId · mdfConceptName</text>
+<rect x="72" y="130" width="420" height="48" rx="8" class="b-read"/><text x="86" y="150" class="t">softwareTypes[ ]</text><text x="86" y="167" class="sm">softwareTypeId · softwareTypeName</text>
+<rect x="100" y="188" width="420" height="48" rx="8" class="b-read"/><text x="114" y="208" class="t">operatingSystems[ ]</text><text x="114" y="225" class="sm">name</text>
+<rect x="128" y="246" width="420" height="48" rx="8" class="b-read"/><text x="142" y="266" class="t">releases[ ]</text><text x="142" y="283" class="sm">version · fcsDate · lifeCycle · isSuggested</text>
+<rect x="156" y="304" width="420" height="70" rx="8" class="b-acc"/><text x="170" y="324" class="t">images[ ]</text><text x="170" y="341" class="sm">imageGuid · name · size · md5 · sha512</text><text x="170" y="358" class="sm">encryptionSoftwareIndicator · exception[ ]</text>
+<rect x="596" y="14" width="148" height="88" rx="8" class="b-note"/><text x="670" y="36" text-anchor="middle" class="t">Top level</text><text x="670" y="54" text-anchor="middle" class="sm">metadataTransId</text><text x="670" y="70" text-anchor="middle" class="sm">pagination</text><text x="670" y="86" text-anchor="middle" class="sm">invalidImages[ ]</text>
+<rect x="596" y="190" width="148" height="100" rx="8" class="b-note"/><text x="670" y="212" text-anchor="middle" class="t">Download call</text><text x="670" y="230" text-anchor="middle" class="s">needs four values:</text><text x="670" y="248" text-anchor="middle" class="sm">pid · mdfId</text><text x="670" y="264" text-anchor="middle" class="sm">imageGuids</text><text x="670" y="280" text-anchor="middle" class="sm">metadataTransId</text>
+<path d="M464 96 C540 96 560 180 596 210" class="a-acc dsh" marker-end="url(#f2-acc)"/>
+<path d="M576 330 C600 330 620 310 650 292" class="a-acc dsh" marker-end="url(#f2-acc)"/>
+</svg></div><figcaption><b>Figure 2.</b> The metadata response tree. Flatten it to one row per image before deciding; the Python client below does this. The JSON samples use <code>name</code>, <code>size</code>, <code>version</code> and <code>lifeCycle</code> where the parameter tables say <code>imageName</code>, <code>imageSize</code>, <code>releaseVersion</code> and <code>lifecycle</code>: read both.</figcaption></figure>
+<div class="cards">
+  <div class="card c-read"><h4>Always inspect exception[ ]</h4><p>A metadata call can return HTTP 200 with an exception code on an image, such as <code>IMG_CONTRACT_REQD</code> or <code>IMG_K9</code>. The metadata is real, but no download URL will follow until the cause is fixed.</p></div>
+  <div class="card c-read"><h4>Signals worth storing</h4><p><code>isSuggested</code>, <code>lifeCycle</code>, <code>psirtIndicator</code> (Product Security Incident Response Team advisory attached), <code>softwareAdvisory</code>, <code>deferralNotice</code>, <code>isDeleted</code>, <code>additionalEntitlement</code>.</p></div>
+  <div class="card c-read"><h4>PID format</h4><p>One PID per call. Cisco's example shows a full UDI-style value (<code>ACS-1800-RM-19=VID:V01</code>); a base PID such as <code>C9300-48P</code> is the usual input. If you get <code>NO_DATA_FOUND_FOR_PID</code>, check the PID and try the base PID without suffixes.</p></div>
+</div>
+</section>
+
+<section id="compliance"><p class="eyebrow">Workflow</p><h2>EULA and K9 gates</h2>
+<p>Some images need a signed EULA, and strong-encryption images need the K9 export form. You read the current text with a GET and record acceptance with a POST. The gates show up as exception codes (<code>EULA_FORM_AR</code>, <code>K9_FORM_AR</code>, <code>K9_EULA_FORM_AR</code>, <code>K9_IMG_DWLD</code>) or as <code>eulaContent</code> and <code>k9Content</code> in the download response.</p>
+<div class="tbl"><table><thead><tr><th>Operation</th><th>Purpose</th><th>Body</th></tr></thead><tbody>
+<tr><td><code>GET /compliance/eula</code></td><td>Current EULA text, accept and decline values, <code>webForm</code> link, <code>subAppVersion</code></td><td>None</td></tr>
+<tr><td><code>POST /compliance/eula</code></td><td>Record acceptance or decline</td><td><code>status</code> (<code>Accepted</code> | <code>Declined</code>), <code>fileNames</code>, <code>declineComments</code> if declined</td></tr>
+<tr><td><code>GET /compliance/k9</code></td><td>K9 form fields and values, user details, <code>webForm</code> link</td><td>None</td></tr>
+<tr><td><code>POST /compliance/k9</code></td><td>Record the K9 answers</td><td><code>status</code>, <code>busFunction</code> (<code>COMM_OR_CIVIL</code>), <code>confirm</code> (<code>CONFIRM_CHECKED</code>), <code>govMilCountries</code>, <code>fileNames</code> (one), <code>declineComments</code> if declined</td></tr>
+</tbody></table></div>
+<p class="note amber"><b>These are legal attestations, not plumbing.</b> A POST to <code>/compliance/k9</code> certifies export-control answers for the organization, on behalf of the Cisco.com identity behind the app. Have the person entitled to make that statement accept it once, interactively (the <code>webForm</code> links to <code>software.cisco.com/download/k9</code> and <code>/eula</code>), and do not hard-code acceptance into an unattended pipeline. A rejected K9 (<code>K9_REJECTED</code>) is reviewed by Cisco; the documented retry window is about four hours.</p>
+</section>
+
+<section id="download"><p class="eyebrow">Workflow</p><h2>Get the file <span class="bdg bdg-dev">Leaves the API tier</span></h2>
+<p><code>POST /download/pidimage</code> turns up to five image GUIDs into sessionalized URLs. It returns no checksum: keep the SHA-512 from the metadata call.</p>
+<div class="code"><div class="code-h"><span>Request and response · download URLs</span><button type="button" class="copy">Copy</button></div><pre><code>POST https://apix.cisco.com/software/v4.0/download/pidimage
+Authorization: Bearer &lt;access_token&gt;
+Content-Type: application/json
+
+{
+  "pid": "ACS-1800-RM-19=",
+  "mdfId": "286305578",
+  "metadataTransId": "617462102359722937",
+  "imageGuids": ["25856C5890AE73F8EDBEEDA441EC901F8FC8362E"]
+}
+
+# 200 OK (abridged from Cisco's sample)
+{
+  "sessionId": "205785277984030082",
+  "downloads": [{
+    "url": "https://…/download.cgi?dwnld_code=…",
+    "token": "",
+    "imageGuid": "25856C5890AE73F8EDBEEDA441EC901F8FC8362E",
+    "imageName": "n9000-epld.7.0.3.I7.9.img",
+    "exception": []
+  }]
+}</code></pre></div>
+<div class="tbl"><table><thead><tr><th><code>token</code> field</th><th>Where the image is</th><th>How to fetch it</th></tr></thead><tbody>
+<tr><td>Empty</td><td>Default download server</td><td>Append <code>&amp;access_token=&lt;your API token&gt;</code> to <code>url</code> and request it (the guide's client uses GET).</td></tr>
+<tr><td>Set</td><td>Cisco cloud store</td><td><code>POST</code> to <code>url</code> with <code>Content-Type: application/x-www-form-urlencoded</code> and body <code>X-Authentication-Control=&lt;token&gt;</code>. Follow one or more HTTP 302 redirects.</td></tr>
+</tbody></table></div>
+<div class="code"><div class="code-h"><span>Shell · fetch and verify</span><button type="button" class="copy">Copy</button></div><pre><code># Default URL (token field empty)
+curl -fL -o "$IMAGE" "$URL&amp;access_token=$ACCESS_TOKEN"
+
+# Cloud URL (token field set): form POST, follow redirects
+curl -fL -o "$IMAGE" -X POST "$URL" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "X-Authentication-Control=$CLOUD_TOKEN"
+
+# Compare with the sha512 from the metadata call
+echo "$SHA512  $IMAGE" | sha512sum -c -</code></pre></div>
+<p class="note">Cisco's own cloud example passes <code>-k</code>, which turns off certificate checks. Leave it out and keep verification on: a software image is exactly what you do not want intercepted or swapped.</p>
+</section>
+
+<section id="builder"><p class="eyebrow">Workflow</p><h2>Request builder</h2>
+<p>Fill in what you know; the builder writes the matching calls with the body fields spelled as in Cisco's samples. Nothing leaves this page.</p>
+<div class="tool" id="rb">
+  <p class="tool-h">Your device and target</p>
+  <div class="fields">
+    <label>PID<input id="rb-pid" value="C9300-48P" autocomplete="off" spellcheck="false"></label>
+    <label>Current release<input id="rb-cur" value="17.9.4" autocomplete="off" spellcheck="false"></label>
+    <label>Target<input id="rb-out" value="latest" autocomplete="off" spellcheck="false" list="rb-opts"></label>
+    <label>Image names (optional, comma separated)<input id="rb-img" value="" placeholder="cat9k_iosxe.17.12.06.SPA.bin" autocomplete="off" spellcheck="false"></label>
+  </div>
+  <datalist id="rb-opts"><option value="latest"><option value="above"></datalist>
+  <p class="tool-note">Target is <code>latest</code>, <code>above</code>, or a specific release such as <code>17.12.6</code>. With image names, the builder uses <code>/metadata/pidimage</code> instead.</p>
+  <div class="chips" id="rb-tabs"><button type="button" class="chip" data-t="curl" aria-pressed="true">curl</button><button type="button" class="chip" data-t="py" aria-pressed="false">Python</button><button type="button" class="chip" data-t="json" aria-pressed="false">JSON bodies</button></div>
+  <div class="code"><div class="code-h"><span id="rb-label">Shell · generated</span><button type="button" class="copy">Copy</button></div><pre><code id="rb-out-code"></code></pre></div>
+</div>
+</section>
+
+<section id="client"><p class="eyebrow">Workflow</p><h2>Python client</h2>
+<p>A complete client: token caching with early renewal, the three metadata shapes flattened into rows, exception-aware selection, both download modes, streamed SHA-512 verification, and backoff on the 403 rate-limit responses ASD uses instead of 429. It was run end to end against a local mock of the documented request and response shapes (token, metadata, a K9-blocked image skipped, download URL, 302 redirect, checksum). It has not been run against Cisco's production API.</p>
+<div class="code"><div class="code-h"><span>Python 3 · asd_client.py (needs <code>requests</code>)</span><button type="button" class="copy">Copy</button></div><pre><code>%%CLIENT%%</code></pre></div>
+<div class="code"><div class="code-h"><span>Shell · run it</span><button type="button" class="copy">Copy</button></div><pre><code>pip install requests
+export CISCO_CLIENT_ID=…  CISCO_CLIENT_SECRET=…
+python asd_client.py C9300-48P 17.9.4
+# 17.12.6        cat9k_iosxe.17.12.06.SPA.bin   …  ok
+# cat9k_iosxe.17.12.06.SPA.bin downloaded and SHA-512 verified</code></pre></div>
+</section>
+
+<section id="suggestion"><p class="eyebrow">Companions</p><h2>Software Suggestion v2: which release?</h2>
+<p>ASD says what exists and lets you download it. Software Suggestion says what Cisco recommends, based on stability, longevity, adoption rate and other factors. Use it first to choose the target, then hand the release to ASD. All operations are <code>GET</code> on <code>https://apix.cisco.com/software/suggestion/v2/suggestions/…</code>, with the same Bearer token, once the app has access to "Software Suggestion API V2".</p>
+<div class="tbl"><table><thead><tr><th>Path</th><th>Returns</th></tr></thead><tbody>
+<tr><td><code>/software/productIds/{productIds}</code></td><td>Suggested releases and their images for a list of PIDs</td></tr>
+<tr><td><code>/releases/productIds/{productIds}</code></td><td>Suggested releases without images</td></tr>
+<tr><td><code>/compatible/productId/{basePID}</code></td><td>Compatible and suggested releases for one PID, filterable by <code>currentImage</code>, <code>currentRelease</code>, <code>supportedFeatures</code></td></tr>
+<tr><td><code>/software/mdfIds/{mdfIds}</code>, <code>/releases/mdfIds/{mdfIds}</code>, <code>/compatible/mdfId/{mdfId}</code></td><td>The same three views keyed by MDF ID</td></tr>
+</tbody></table></div>
+<div class="code"><div class="code-h"><span>Shell · suggested releases for two PIDs</span><button type="button" class="copy">Copy</button></div><pre><code>curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
+  "https://apix.cisco.com/software/suggestion/v2/suggestions/releases/productIds/C9300-48P,C9500-48Y4C?pageIndex=1"</code></pre></div>
+<p class="note amber">Community threads report empty or wrong suggestions for some PIDs (retired platforms, some Nexus and Catalyst 9500 PIDs, and a 5508 wireless controller case). Treat a suggestion as input to a decision, and cross-check it against release notes and field notices before it drives an automated upgrade.</p>
+</section>
+
+<section id="productinfo"><p class="eyebrow">Companions</p><h2>Product Information: getting the MDF ID</h2>
+<p>The download call needs the <code>mdfId</code>. The metadata calls already return it, so you rarely need this, but the Product Information API maps PIDs to MDF IDs directly, which helps when you key a repository by MDF ID or call Software Suggestion by MDF ID.</p>
+<div class="code"><div class="code-h"><span>Shell · PID to MDF ID (up to 5 PIDs)</span><button type="button" class="copy">Copy</button></div><pre><code>curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
+  "https://apix.cisco.com/product/v1/information/product_ids_mdf/ASA5505-50-BUN-K9?page_index=1"
+# product_list[0].product_name_mdf   -> MDF ID of the product
+# product_list[0].product_series_mdf -> MDF ID of the series</code></pre></div>
+<p>Note the snake_case here (<code>page_index</code>, <code>product_list</code>) against camelCase in ASD and Software Suggestion: each Support API has its own naming.</p>
+</section>
+
+<section id="controllers"><p class="eyebrow">Companions</p><h2>Catalyst Center and Intersight</h2>
+<p>When a controller manages the devices, let it fetch and stage images through its own cisco.com connection; you automate the controller rather than ASD.</p>
+<div class="tbl"><table><thead><tr><th>Platform</th><th>Get images from cisco.com</th><th>Distribute and activate</th></tr></thead><tbody>
+<tr><td>Catalyst Center 2.3.7.x and 3.x</td><td><code>POST /dna/intent/api/v1/images/ccoSync</code> (rate limited; the spec lists 2 per hour), then <code>GET /dna/intent/api/v1/images?imported=false</code> to list them, then <code>POST /dna/intent/api/v1/images/{id}/download</code>. Cisco's Ansible SWIM (Software Image Management) workflow module supports cisco.com import from 2.3.7.6.</td><td>From 2.3.7.9, the <code>networkDeviceImages</code> family (readiness checks, bulk distribute and activate). The older <code>/image/distribution</code> and <code>/image/activation/device</code> still answer but were marked Sunset in 3.1.3. Local imports: <code>/image/importation/source/url</code> and <code>/source/file</code>.</td></tr>
+<tr><td>Intersight (UCS)</td><td>Firmware bundles come from the Intersight software repository; the API object is <code>firmware/Distributables</code>.</td><td><code>POST /api/v1/firmware/Upgrades</code> for servers; fabric-interconnect upgrades in Intersight Managed Mode. Scope is UCS servers and fabric interconnects.</td></tr>
+</tbody></table></div>
+<p>The SWIM details for Catalyst Center are in the companion Catalyst Center API field guide on CiscoSE.</p>
+</section>
+
+<section id="choose"><p class="eyebrow">Companions</p><h2>Which path?</h2>
+<div class="tool" id="pick"><p class="tool-h">What are you trying to do?</p>
+<div class="chips">
+<button type="button" class="chip" data-k="repo" aria-pressed="false">Fill our own image repository</button>
+<button type="button" class="chip" data-k="catc" aria-pressed="false">Upgrade a campus managed by Catalyst Center</button>
+<button type="button" class="chip" data-k="ucs" aria-pressed="false">Upgrade UCS servers</button>
+<button type="button" class="chip" data-k="pick" aria-pressed="false">Decide which release to run</button>
+<button type="button" class="chip" data-k="audit" aria-pressed="false">Audit images running in the field</button>
+</div>
+<div class="tool-out" aria-live="polite"><p class="ct-t" id="pick-t">Pick a goal</p><p id="pick-d">Each answer names the API, the calls and the catch.</p></div></div>
+</section>
+
+<section id="errors"><p class="eyebrow">Operate</p><h2>Errors and exceptions</h2>
+<p>ASD reports problems in two ways. HTTP errors (400, 401, 403, 5xx) mean the call itself failed. Exception codes inside a <b>200</b> response mean the call worked but this image cannot be downloaded yet. Code that only checks the status code will miss the second kind.</p>
+<div class="tool slim"><label class="tool-h" for="err-q">Look up a code or word</label><input id="err-q" placeholder="for example K9, contract, 403, MTRANSID" autocomplete="off" spellcheck="false"><p class="tool-note" id="err-n" aria-live="polite"></p></div>
+<div class="tbl"><table id="err-t"><thead><tr><th>Code</th><th>HTTP</th><th>Meaning</th><th>What to do</th></tr></thead><tbody>
+<tr><td><code>Not Authorized</code></td><td>403</td><td>Token invalid, or API key not recognized</td><td>Get a new token; check the app has ASD access in the API Console</td></tr>
+<tr><td><code>Account Over Queries Per Second Limit</code></td><td>403</td><td>Too many calls in one second</td><td>Back off and serialize; this is ASD's rate-limit signal, not 429</td></tr>
+<tr><td><code>Account Over Rate Limit</code></td><td>403</td><td>Too many calls in the quota period</td><td>Slow down; check usage under Keys in the API Console</td></tr>
+<tr><td><code>Account Inactive</code></td><td>403</td><td>Key not approved or disabled</td><td>Contact the Support API team</td></tr>
+<tr><td><code>PROD_REG_NA</code></td><td>401</td><td>Product must be registered and approved for the service</td><td>Email swc-it-support@cisco.com</td></tr>
+<tr><td><code>PROD_REG_AV</code></td><td>401</td><td>This client ID cannot call the service</td><td>Register a new client ID; contact swc-it-support@cisco.com</td></tr>
+<tr><td><code>DNAC_REG_REQ</code></td><td>401</td><td>App must be registered for the service</td><td>Contact swc-it-support@cisco.com</td></tr>
+<tr><td><code>SW_NO_LONGER_AVL</code></td><td>401</td><td>Software for this product is no longer available</td><td>Platform is retired from the download site</td></tr>
+<tr><td><code>INVALID_OUTPUT_RELEASE</code></td><td>401</td><td>Output release empty</td><td>Send <code>outputReleaseVersion</code></td></tr>
+<tr><td><code>PID_INVALID</code> · <code>PID_MISSING</code></td><td>400</td><td>PID invalid or absent</td><td>Check spelling and the <code>pid</code> field name</td></tr>
+<tr><td><code>NO_DATA_FOUND_FOR_PID</code></td><td>400</td><td>No software for that PID</td><td>Try the base PID; confirm on the download site</td></tr>
+<tr><td><code>CUR_REL_MISSING</code> · <code>OUT_REL_MISSING</code></td><td>400</td><td>Current or output release absent</td><td>Send both release fields</td></tr>
+<tr><td><code>IMG_NM_MISSING</code> · <code>IMG_NM_INVALID</code></td><td>400</td><td>Image names absent or invalid</td><td>Send <code>imageNames</code> as an array of exact file names</td></tr>
+<tr><td><code>IMAGE_LIMIT_EXCEEDED</code></td><td>400</td><td>Too many image names or GUIDs</td><td>Five per call</td></tr>
+<tr><td><code>MDFID_MISSING</code> · <code>MDFID_INVALID</code></td><td>400</td><td>MDF ID absent or invalid</td><td>Use <code>mdfId</code> from the same metadata response</td></tr>
+<tr><td><code>IMAGE_GUID_MISSING</code> · <code>IMAGE_GUID_INVALID</code></td><td>400</td><td>Image GUID absent or invalid</td><td>Use <code>imageGuid</code> from the same metadata response</td></tr>
+<tr><td><code>MTRANSID_MISSING</code> · <code>INVALID_MTRANSID</code></td><td>400</td><td>Transaction ID absent or invalid</td><td>Send <code>metadataTransId</code> from a metadata call</td></tr>
+<tr><td><code>MTRANSID_EXPIRED</code></td><td>400</td><td>Transaction ID older than 60 minutes</td><td>Re-run the metadata call, then download</td></tr>
+<tr><td><code>INVALID_INPUT</code></td><td>400</td><td>Invalid input or no data found</td><td>Validate the body against the Swagger file</td></tr>
+<tr><td><code>Service Not Found</code></td><td>596</td><td>Service missing, often spaces in parameters</td><td>Trim inputs</td></tr>
+<tr><td><code>SER_UNEXPECT_FAIL</code></td><td>500</td><td>Unexpected service failure</td><td>Retry later; report with the request data</td></tr>
+<tr><td><code>API Maintenance/Service Unavailable</code></td><td>503</td><td>Maintenance</td><td>Retry with backoff</td></tr>
+<tr><td><code>IMG_CONTRACT_REQD</code></td><td>200</td><td>Contract-registered image: metadata only, no URL</td><td>Add the covering contract to the Cisco.com profile (Profile Manager)</td></tr>
+<tr><td><code>CONTRACT_NOT_AUTH</code> · <code>CONTRACT_REJECTED</code></td><td>200</td><td>Contracts on the profile do not cover this product</td><td>Associate the right contract, or ask the account team or partner</td></tr>
+<tr><td><code>CONTRACT_LOGIN</code> · <code>CONTRACT_IMG_REQ</code> · <code>CONTRACT_REQ_DWLD</code> · <code>CONTRACT_REQD_DWLD</code> · <code>CONTRACT_IMG_DWLD</code></td><td>200</td><td>A valid service contract is required</td><td>Same as above</td></tr>
+<tr><td><code>IAC_ERROR</code> · <code>CONTRACT_ACCESS</code></td><td>200</td><td>No access to download contract-registered software</td><td>Request Software Download Access in ART</td></tr>
+<tr><td><code>IMG_K9</code></td><td>200</td><td>Strong-encryption image; download not approved</td><td>Complete the K9 form; questions to tradeopscpr@cisco.com</td></tr>
+<tr><td><code>K9_IMG_DWLD</code> · <code>K9_FORM_AR</code> · <code>K9_FORM_ACC</code></td><td>200</td><td>K9 form not yet accepted</td><td>Accept K9 (see EULA and K9 gates)</td></tr>
+<tr><td><code>EULA_FORM_AR</code> · <code>EULA_FORM_ACC</code> · <code>K9_EULA_FORM_AR</code></td><td>200</td><td>EULA (and possibly K9) not yet accepted</td><td>Accept EULA, then K9 if listed</td></tr>
+<tr><td><code>K9_REJECTED</code></td><td>200</td><td>K9 answers under review or rejected</td><td>Retry after about 4 hours; tradeopscpr@cisco.com</td></tr>
+<tr><td><code>IP_CHECK_FAIL</code></td><td>200</td><td>Request from a territory not authorized to receive Cisco products</td><td>Check egress location; tradeopscpr@cisco.com</td></tr>
+<tr><td><code>LOGIN_REQD</code> · <code>LOGIN_IMG_DWLD</code> · <code>LOGIN_CONTRACT_REQ</code></td><td>200</td><td>A Cisco.com login (with contract) is required</td><td>The identity behind the app lacks the profile setup</td></tr>
+<tr><td><code>CPR_ADDRESS_EXCEPTION_MSG</code></td><td>200</td><td>Profile is missing a full address</td><td>Complete the address in Profile Manager</td></tr>
+<tr><td><code>C3_USERID_NMAP</code></td><td>200</td><td>User ID not mapped in C3 (a Cisco back-end system)</td><td>Contact Cisco support</td></tr>
+<tr><td><code>SW_ADV_IMAGE</code> · <code>DEF_ADV_IMAGE</code></td><td>200</td><td>Software or deferral advisory on the image</td><td>Read the advisory before using the image</td></tr>
+<tr><td><code>DWLD_WARN</code> · <code>DWLD_WARN1</code> · <code>DWLD_WARN2</code></td><td>200</td><td>You may not be authorized for the product</td><td>Check contract coverage; ent-dl@cisco.com</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="limits"><p class="eyebrow">Operate</p><h2>Quotas and limits</h2>
+<div class="tbl"><table><thead><tr><th>Limit</th><th>Value</th><th>Source</th></tr></thead><tbody>
+<tr><td>Records per metadata page</td><td>25</td><td>ASD reference</td></tr>
+<tr><td>PIDs per metadata call</td><td>1</td><td>ASD reference</td></tr>
+<tr><td>Image names or GUIDs per call</td><td>1–5</td><td>ASD reference</td></tr>
+<tr><td><code>metadataTransId</code> and download URL life</td><td>60 minutes</td><td>ASD reference</td></tr>
+<tr><td>Access token life</td><td>3,600 seconds by default</td><td>Support APIs authentication page</td></tr>
+<tr><td>Calls per second and per day</td><td>Not in the ASD reference</td><td>The API Console's Register a New App form shows each API's limits next to its name; ASD's appear there once your account can select it. Exceeding them returns <b>403</b> (Over Queries Per Second, Over Rate Limit). Usage per key is under Keys.</td></tr>
+</tbody></table></div>
+<p class="note">For scale, the same form shows 5 per second and 60 per minute for the PSIRT openVuln API, and 10 per second and 5,000 per day for the CX Cloud APIs; community reports cite 5,000 per day for EoX (End of Life). None of these is an ASD number: design for a few calls per minute and cache metadata.</p>
+</section>
+
+<section id="quirks"><p class="eyebrow">Operate</p><h2>Documentation quirks</h2>
+<p>The v4.0 reference contradicts itself in places. Where it does, this guide follows the sample requests and recommends checking the Swagger YAML (downloadable from the API Console) for your account.</p>
+<div class="tbl"><table><thead><tr><th>Where</th><th>Table says</th><th>Sample uses</th></tr></thead><tbody>
+<tr><td><code>/metadata/pidrelease</code> request</td><td><code>PID</code>, <code>OutputReleaseVersion</code>, <code>perpage</code>, target <code>Latest</code></td><td><code>pid</code>, <code>outputReleaseVersion</code>, <code>perPage</code>, <code>latest</code></td></tr>
+<tr><td>Metadata responses</td><td><code>imageName</code>, <code>imageSize</code>, <code>releaseVersion</code>, <code>lifecycle</code>, <code>fieldNoticeUrl</code></td><td><code>name</code>, <code>size</code>, <code>version</code>, <code>lifeCycle</code>, <code>fieldNotice</code></td></tr>
+<tr><td><code>/metadata/images</code> request</td><td><code>imageNames</code> described as GUIDs</td><td>Image file names</td></tr>
+<tr><td><code>/compliance/k9</code> request</td><td><code>busfunction</code>, <code>confirm</code> = <code>Confirm_Checked</code>, <code>declineComments</code> typed int</td><td><code>busFunction</code>, <code>CONFIRM_CHECKED</code>, text</td></tr>
+<tr><td><code>/compliance/eula</code> request</td><td><code>declineComments</code> described as a download session ID</td><td>Free text</td></tr>
+<tr><td>Hosts in samples</td><td>—</td><td><code>api-stage.cisco.com</code> and <code>dl-stage.cisco.com</code> appear in <code>selfLink</code> and URLs: Cisco's stage environment. Production is <code>apix.cisco.com</code>.</td></tr>
+<tr><td>Older posts</td><td>—</td><td><code>api.cisco.com/software/…</code> and <code>cloudsso.cisco.com</code>: pre-2023 hosts</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="checklist"><p class="eyebrow">Operate</p><h2>Guidance checklist</h2><ol class="rules">
+<li><b>Confirm entitlement first:</b> SNTC or PSS, API Developer role, ASD visible in the API Console, contracts on the profile, ART software download access.</li>
+<li><b>Use a dedicated automation identity,</b> not a person's Cisco.com login.</li>
+<li><b>Cache the token</b> and renew it about five minutes before <code>expires_in</code>.</li>
+<li><b>Pick the target with Software Suggestion,</b> download with ASD.</li>
+<li><b>Check <code>exception[]</code> on every 200.</b> No URL follows until it is empty.</li>
+<li><b>Finish the download inside 60 minutes</b> of the metadata call; on <code>MTRANSID_EXPIRED</code> start again from metadata.</li>
+<li><b>Never automate K9 or EULA acceptance silently.</b> Have the accountable person accept once.</li>
+<li><b>Verify SHA-512 before an image enters the repository;</b> delete on mismatch.</li>
+<li><b>Keep TLS (Transport Layer Security) verification on</b> and keep tokens out of logs and URLs you store.</li>
+<li><b>Treat 403 as possibly a rate limit:</b> read the message, back off, retry a few times.</li>
+<li><b>Prefer the controller</b> when Catalyst Center or Intersight already manages the devices.</li>
+<li><b>Validate field names against the Swagger YAML</b> for your account before production.</li>
+</ol></section>
+
+<section id="figures"><p class="eyebrow">Operate</p><h2>Figure index</h2><ol class="figidx">
+<li><a href="#fig-0"><span class="fi-n">Figure 0</span><span class="fi-t">Where ASD sits</span><span class="fi-s">What ASD is</span></a></li>
+<li><a href="#fig-1"><span class="fi-n">Figure 1</span><span class="fi-t">End-to-end download sequence (step-through)</span><span class="fi-s">End-to-end flow</span></a></li>
+<li><a href="#fig-2"><span class="fi-n">Figure 2</span><span class="fi-t">Metadata response tree</span><span class="fi-s">Find images</span></a></li>
+</ol></section>
+
+<section id="sources"><p class="eyebrow">Operate</p><h2>Sources</h2><ol class="src">
+<li><a href="https://developer.cisco.com/docs/support-apis/automated-software-distribution/">Automated Software Distribution API reference (v4.0)</a>: all eight operations, error codes, cloud download</li>
+<li><a href="https://developer.cisco.com/docs/support-apis/introduction-to-cisco-support-apis/">Introduction to Cisco Support APIs</a>: portfolio</li>
+<li><a href="https://developer.cisco.com/docs/support-apis/user-onboarding-process/">Support APIs user onboarding process</a>: SNTC and PSS access</li>
+<li><a href="https://developer.cisco.com/docs/support-apis/application-registration/">Support APIs application registration</a>: API Console, client credentials</li>
+<li><a href="https://developer.cisco.com/docs/support-apis/authentication/">Support APIs authentication</a>: token endpoint and lifetime</li>
+<li><a href="https://developer.cisco.com/docs/support-apis/software-suggestion/">Software Suggestion API v2</a></li>
+<li><a href="https://developer.cisco.com/docs/support-apis/product-information/">Product Information API</a>: PID to MDF ID</li>
+<li><a href="https://community.cisco.com/t5/services-discussions/openvulnquery-authorization-issues/m-p/4811626">Cisco Community: legacy cloudsso endpoint for apps before 1 March 2023</a></li>
+<li><a href="https://community.cisco.com/t5/services-discussions/automated-software-distribution-api/m-p/5371226">Cisco Community: ASD takes the PID in the body (400 otherwise)</a></li>
+<li><a href="https://developer.cisco.com/docs/dna-center/initiates-sync-of-software-images-from-cisco-com">Catalyst Center: initiate sync of images from Cisco.com</a> and <a href="https://developer.cisco.com/docs/dna-center/download-the-software-image">download the software image</a></li>
+<li><a href="https://developer.cisco.com/docs/dna-center/swim/">Catalyst Center Software Image Management guide</a></li>
+<li><a href="https://docs.ansible.com/ansible/9/collections/cisco/dnac/swim_workflow_manager_module.html">Ansible swim_workflow_manager module</a>: cisco.com import from 2.3.7.6</li>
+<li><a href="https://www.cisco.com/c/en/us/td/docs/unified_computing/Intersight/b_Intersight_Managed_Mode_Configuration_Guide/m_review_map_firmware_management.html">Intersight Managed Mode: managing firmware</a></li>
+<li><a href="https://apiconsole.cisco.com/docs/read/overview/Migrating_Applications">Cisco API Console: Migrating Applications</a>: token URL and host changes</li>
+<li><a href="https://apiconsole.cisco.com/docs/read/external_apis/Automated_Software_Distribution_PreviewV3">Cisco API Console: Automated Software Distribution Preview-V3 listing</a> (sign-in required)</li>
+<li>Cisco API Console, Register a New App form: per-API rate limits (sign-in required)</li>
+</ol></section>
+</main></div>
+<footer class="site"><div class="in">
+  <p class="brandline">Cisco<span>SE</span> · Field reference</p>
+  <p>Built from the Cisco DevNet Automated Software Distribution API reference (v4.0), the Cisco Support APIs onboarding, registration and authentication guides, the Cisco API Console, and the Catalyst Center and Intersight documentation. Field names follow Cisco's sample requests; verify them against the Swagger YAML in your API Console before production use.</p>
+  <p>Not an official Cisco publication. Corrections are welcome as pull requests with the supporting document and release.</p>
+</div></footer>

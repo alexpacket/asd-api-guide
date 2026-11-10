@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cisco Automated Software Distribution API Field Guide</title>
+<meta name="description" content="Field guide to the Cisco Automated Software Distribution (ASD) API v4.0: use cases, deployment, entitlement, OAuth, metadata, EULA and K9, download URLs, errors, and companion APIs.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2312263A%22/%3E%3Cpath d=%22M32 14v26M22 30l10 10 10-10M18 48h28%22 stroke=%22%23049FD9%22 stroke-width=%225%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>/* SE-brand. Layout: sticky header, black promo strip + hero, then a 260px sticky contents sidebar beside one reading column; diagrams sit on black stages in both themes. */
+:root {
+  --bg:#FFFFFF; --surface:#F2F5F7; --panel:#FFFFFF; --ink:#07182D; --ink-2:#536070; --ink-3:#7A8796;
+  --rule:#E1E6EB; --accent:#0A60FF; --accent-soft:#E8F0FF; --cyan:#00BCEB;
+  --green:#1F8A4C; --green-soft:#E3F3EA; --amber:#B86E00; --amber-soft:#FFF2DC; --red:#CC2D37; --red-soft:#FCE8E9;
+  --sans:'Inter','Noto Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#05101C; --surface:#0B1622; --panel:#0B1622; --ink:#FFFFFF; --ink-2:#C9D1DA; --ink-3:#8C99A8;
+  --rule:#1E2B3A; --accent:#4D8DFF; --accent-soft:#0E2247; --cyan:#33CCF0;
+  --green:#4CC38A; --green-soft:#0F2E21; --amber:#F0AA3C; --amber-soft:#33240A; --red:#F07A80; --red-soft:#3A1418; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg:#05101C; --surface:#0B1622; --panel:#0B1622; --ink:#FFFFFF; --ink-2:#C9D1DA; --ink-3:#8C99A8;
+  --rule:#1E2B3A; --accent:#4D8DFF; --accent-soft:#0E2247; --cyan:#33CCF0;
+  --green:#4CC38A; --green-soft:#0F2E21; --amber:#F0AA3C; --amber-soft:#33240A; --red:#F07A80; --red-soft:#3A1418; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 80px); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--panel); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.in { max-width: 1240px; margin: 0 auto; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+
+/* Header */
+header.site { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--panel); border-bottom: 1px solid var(--rule); }
+header.site .in { display: flex; align-items: center; gap: 28px; height: 64px; }
+.brand { display: flex; flex-direction: column; line-height: 1.15; text-decoration: none; color: var(--ink); flex: none; }
+.brand b { font-weight: 700; font-size: 17px; letter-spacing: -.01em; }
+.brand b span { color: var(--cyan); }
+.brand small { font-size: 11.5px; color: var(--ink-2); }
+header.site nav { display: flex; gap: 22px; min-width: 0; }
+header.site nav a { color: var(--ink); text-decoration: none; font-size: 14px; padding: 6px 0; border-bottom: 2px solid transparent; white-space: nowrap; }
+header.site nav a:hover, header.site nav a[aria-current="true"] { border-bottom-color: var(--accent); }
+.pill { margin-left: auto; display: inline-flex; align-items: center; font: 600 14px var(--sans); padding: 8px 20px; border-radius: 48px;
+  border: 1px solid var(--accent); color: var(--accent); background: transparent; cursor: pointer; text-decoration: none; flex: none; }
+.pill:hover { background: var(--accent-soft); }
+
+/* Black bands */
+.strip { background: #000; color: #fff; font-size: 13.5px; text-align: center; padding: 10px 16px; }
+.hero { background: #000; color: #fff; padding-block: 52px 48px; }
+.hero .eyebrow { color: #33CCF0; }
+.hero h1 { font-size: clamp(32px, 4.4vw, 48px); line-height: 1.17; font-weight: 500; letter-spacing: -.015em; margin: 0 0 14px; max-width: 22ch; text-wrap: balance; }
+.hero .lead { font-size: 18px; color: #B9C1C9; max-width: 66ch; margin: 0 0 14px; }
+.hero .meta { font-size: 13px; color: #8C99A8; max-width: 80ch; margin: 0 0 22px; }
+.hero .meta b { color: #B9C1C9; font-weight: 600; }
+.hbtns { display: flex; flex-wrap: wrap; gap: 10px; }
+.hbtn { display: inline-flex; font: 600 16px var(--sans); padding: 10px 20px; border-radius: 48px; border: 1px solid #fff; background: transparent; color: #fff; text-decoration: none; }
+.hbtn.solid { background: #fff; color: #07182D; }
+footer.site { background: #000; color: #B9C1C9; font-size: 13px; padding-block: 28px; }
+footer.site p { margin: 0 0 8px; max-width: 110ch; color: #B9C1C9; }
+footer.site p:last-child { margin-bottom: 0; }
+footer.site b { color: #fff; font-weight: 600; }
+footer.site .brandline { color: #fff; font-weight: 700; font-size: 15px; }
+footer.site .brandline span { color: #33CCF0; }
+footer.site a { color: #33CCF0; }
+
+/* Layout */
+.layout { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 48px;
+  padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+main { min-width: 0; max-width: 880px; padding-block: 40px 72px; }
+.side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 64px); align-self: start; max-height: calc(100vh - 64px); overflow-y: auto; padding-block: 28px 24px; }
+.side summary { font-size: 12px; font-weight: 600; color: var(--ink-3); cursor: pointer; list-style: none; margin-bottom: 4px; }
+.side summary::-webkit-details-marker { display: none; }
+.nav-part { margin: 18px 0 4px; font-size: 12px; font-weight: 600; color: var(--ink); padding-left: 10px; }
+.side ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.side a { display: block; padding: 6px 10px; border-radius: 8px; color: var(--ink-2); text-decoration: none; font-size: 14px; }
+.side a:hover { background: var(--surface); color: var(--ink); }
+.side a.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.side .legend { margin-top: 22px; border-top: 1px solid var(--rule); padding-top: 14px; display: grid; gap: 8px; font-size: 12.5px; color: var(--ink-2); }
+.side .legend div { display: flex; gap: 8px; align-items: center; }
+.sw { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+
+/* Content type */
+.eyebrow { font-size: 13px; font-weight: 600; color: var(--accent); margin: 0 0 8px; }
+section { margin-top: 56px; scroll-margin-top: 80px; display: grid; gap: 16px; }
+section > * { margin: 0; min-width: 0; }
+section > .eyebrow { margin-bottom: -10px; }
+h2 { font-size: clamp(26px, 3vw, 36px); font-weight: 500; letter-spacing: -.01em; line-height: 1.2; text-wrap: balance; }
+h3 { font-size: 18px; font-weight: 600; margin-top: 8px; }
+h4 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+p { max-width: 72ch; color: var(--ink-2); }
+section li { color: var(--ink-2); }
+section li b, p b { color: var(--ink); }
+code { font-family: var(--mono); font-size: .86em; background: var(--surface); color: var(--ink); padding: .1em .38em; border-radius: 4px; overflow-wrap: anywhere; }
+.note { font-size: 15px; color: var(--ink-2); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 14px 18px; max-width: none; }
+.note.amber { border-left-color: var(--amber); }
+
+/* Tags */
+.bdg { display: inline-block; vertical-align: middle; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 48px; white-space: nowrap; letter-spacing: 0; }
+h2 .bdg { margin-left: 6px; position: relative; top: -4px; }
+.bdg-read, .bdg-asr { background: var(--accent-soft); color: var(--accent); }
+.bdg-dev { background: var(--amber-soft); color: var(--amber); }
+.bdg-write { background: var(--green-soft); color: var(--green); }
+.legend-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Stat tiles */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.stats div { background: var(--surface); border-radius: 8px; padding: 18px 20px; display: grid; gap: 4px; }
+.stats b { font-size: 28px; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stats span { font-size: 13px; color: var(--ink-2); line-height: 1.35; }
+
+/* Tables */
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.45; }
+th { font-weight: 600; font-size: 13px; color: var(--ink); border-bottom: 1px solid var(--ink); text-align: left; padding: 12px; vertical-align: bottom; }
+td { color: var(--ink-2); border-bottom: 1px solid var(--rule); padding: 12px; vertical-align: top; min-width: 140px; }
+td code { white-space: normal; }
+
+/* Figures: black stage in both themes */
+.fig { margin: 4px 0; }
+.fig-scroll { overflow-x: auto; background: #000; border: 1px solid #2B3644; border-radius: 8px; padding: 16px; }
+.dg { display: block; width: 100%; min-width: 600px; height: auto; }
+figcaption { font-size: 13px; color: var(--ink-3); padding-top: 10px; }
+figcaption b { color: var(--ink); font-weight: 600; }
+.dg text { font-family: var(--sans); fill: #FFFFFF; }
+.dg .t { font-size: 12.5px; font-weight: 600; }
+.dg .tm { font-size: 12px; font-family: var(--mono); font-weight: 500; }
+.dg .s { font-size: 11px; fill: #B9C1C9; }
+.dg .sm { font-size: 10.5px; font-family: var(--mono); fill: #E6ECF2; }
+.dg .l, .dg .lm { font-size: 11px; fill: #B9C1C9; paint-order: stroke; stroke: #000; stroke-width: 4px; stroke-linejoin: round; }
+.dg .lm { font-family: var(--mono); font-size: 10.5px; fill: #FFFFFF; }
+.dg .tz { font-size: 11.5px; font-weight: 600; fill: #8C99A8; letter-spacing: .04em; text-transform: uppercase; }
+.dg .tl { font-family: var(--mono); font-size: 10.5px; font-weight: 500; }
+.b-n { fill: #0B1622; stroke: #9AA7B4; stroke-width: 1.2; }
+.b-read, .b-asr { fill: #0E2247; stroke: #4D8DFF; stroke-width: 1.3; }
+.b-dev { fill: #33240A; stroke: #E0A93F; stroke-width: 1.3; stroke-dasharray: 5 3; }
+.b-write { fill: #0F2E21; stroke: #4CC38A; stroke-width: 1.3; }
+.b-acc { fill: #062A36; stroke: #33CCF0; stroke-width: 2; }
+.b-bad { fill: #3A1418; stroke: #F07A80; stroke-width: 1.3; }
+.b-off { fill: #000; stroke: #9AA7B4; stroke-width: 1.2; stroke-dasharray: 4 4; }
+.b-zone { fill: none; stroke: #4A5868; stroke-width: 1.2; stroke-dasharray: 6 5; }
+.b-note { fill: #16222F; stroke: none; }
+.a-n, .a-read, .a-asr, .a-dev, .a-write, .a-acc, .a-bad { fill: none; stroke-width: 1.4; }
+.a-n { stroke: #9AA7B4; } .a-read, .a-asr { stroke: #4D8DFF; } .a-dev { stroke: #E0A93F; }
+.a-write { stroke: #4CC38A; } .a-acc { stroke: #33CCF0; } .a-bad { stroke: #F07A80; }
+.dsh { stroke-dasharray: 5 4; }
+.mk-n { fill: #9AA7B4; } .mk-read, .mk-asr { fill: #4D8DFF; } .mk-dev { fill: #E0A93F; }
+.mk-write { fill: #4CC38A; } .mk-acc { fill: #33CCF0; } .mk-bad { fill: #F07A80; }
+.life { stroke: #3A4756; stroke-width: 1; stroke-dasharray: 3 4; }
+.brk { fill: none; stroke: #6B7886; stroke-width: 1.2; }
+.axis { stroke: #9AA7B4; stroke-width: 1.2; }
+.lead { stroke: #2B3644; stroke-width: 1; }
+.rel237 { fill: #9AA7B4; } .rel3 { fill: #4D8DFF; }
+.dg .rel237t { fill: #9AA7B4; } .dg .rel3t { fill: #4D8DFF; }
+.today { stroke: #33CCF0; stroke-width: 1.2; stroke-dasharray: 3 3; }
+.bar-dep { fill: #33240A; stroke: #E0A93F; stroke-width: 1.2; }
+.bar-rem { stroke: #F07A80; stroke-width: 1.4; stroke-dasharray: 2 3; }
+
+/* Cards, step chains, use-when */
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 20px 22px; font-size: 14px; display: grid; gap: 6px; align-content: start; }
+.card h4 { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--ink); }
+.card h4::before { content: ""; width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.card.c-read h4::before { background: var(--accent); } .card.c-asr h4::before { background: var(--accent); } .card.c-write h4::before { background: var(--green); }
+.card p { margin: 0; }
+.fresh { color: var(--ink-3); font-size: 13px; }
+.chain { list-style: none; counter-reset: st; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.chain li { counter-increment: st; position: relative; background: var(--surface); border-radius: 48px; padding: 6px 14px 6px 36px; font-size: 14px; color: var(--ink); min-width: 0; }
+.chain li::before { content: counter(st); position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 11.5px; font-weight: 600; display: grid; place-items: center; line-height: 1; }
+.uw { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px; }
+.uw > div { background: var(--surface); border-left: 3px solid; border-radius: 0 8px 8px 0; padding: 12px 16px; }
+.uw ul { margin: 0; padding-left: 18px; }
+.uw-y { border-left-color: var(--green) !important; } .uw-y h4 { color: var(--green); }
+.uw-n { border-left-color: var(--red) !important; } .uw-n h4 { color: var(--red); }
+.pbs { display: grid; gap: 14px; }
+.pb { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 20px 22px; display: grid; gap: 12px; }
+.pb h3 { margin: 0; }
+.pb-o { margin: 0; font-size: 13px; color: var(--ink-3); }
+
+/* Code */
+.code { border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.code-h { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 8px 6px 14px; font-size: 12.5px; color: var(--ink-3); border-bottom: 1px solid var(--rule); }
+.copy { font: 600 12px var(--sans); color: var(--accent); background: transparent; border: 1px solid var(--accent); border-radius: 48px; padding: 3px 12px; cursor: pointer; }
+.copy:hover { background: var(--accent-soft); }
+.code pre { margin: 0; padding: 14px 16px; overflow-x: auto; font-size: 12.8px; line-height: 1.55; color: var(--ink); }
+.code code { background: none; padding: 0; font-size: inherit; overflow-wrap: normal; }
+
+.rules { margin: 0; padding-left: 22px; display: grid; gap: 8px; max-width: 72ch; }
+.src { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; }
+
+@media (max-width: 1000px) { header.site nav { display: none; } }
+@media (max-width: 960px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .side { position: static; max-height: none; padding-block: 16px 0; }
+  .side details { border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; }
+  .side .legend { display: none; }
+  main { padding-block: 16px 56px; }
+}
+@media (max-width: 760px) {
+  .in, .layout { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .cards, .uw { grid-template-columns: minmax(0, 1fr); }
+  .hero { padding-block: 36px 32px; }
+  .pill { padding: 7px 14px; font-size: 13px; }
+  td { min-width: 120px; }
+}
+.intro { display: grid; gap: 14px; }
+
+/* Interactive controls */
+.dg [data-k], .dg .st { transition: opacity .18s ease; }
+.dg .dim { opacity: .16; }
+.dg .st { cursor: pointer; }
+.dg .st.cur .l, .dg .st.cur .lm { fill: #33CCF0; }
+.dg .st.cur path { stroke-width: 2.2; }
+.dg .hit { fill: transparent; stroke: none; }
+@media (prefers-reduced-motion: reduce) { .dg [data-k], .dg .st { transition: none; } }
+.stepbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; }
+.sbtn { font: 600 13.5px var(--sans); padding: 7px 16px; border-radius: 48px; border: 1px solid var(--accent); color: var(--accent); background: transparent; cursor: pointer; }
+.sbtn:hover { background: var(--accent-soft); }
+.sbtn.solid { background: var(--accent); color: #fff; }
+.sbtn.solid:hover { background: var(--accent); filter: brightness(1.08); }
+.scount { font-size: 13px; color: var(--ink-3); margin-left: 4px; font-variant-numeric: tabular-nums; }
+.steppanel { margin-top: 10px; background: var(--surface); border-left: 3px solid var(--cyan); border-radius: 0 8px 8px 0; padding: 12px 16px; display: grid; gap: 6px; }
+.steppanel p { margin: 0; max-width: none; }
+.sp-t { font-weight: 600; color: var(--ink) !important; }
+.sp-d { font-size: 14.5px; }
+.sp-c, .to-c { margin: 4px 0 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+.sp-c code, .to-c code { background: none; padding: 0; font-size: inherit; overflow-wrap: normal; white-space: pre; }
+.tool { background: var(--surface); border-radius: 8px; padding: 16px 18px; display: grid; gap: 12px; }
+.tool.slim { padding: 12px 16px; gap: 8px; }
+.tool-h { margin: 0; font-size: 14px; font-weight: 600; color: var(--ink) !important; }
+.tool-note { margin: 0; font-size: 13px; color: var(--ink-3) !important; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 600 13.5px var(--sans); padding: 6px 14px; border-radius: 48px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); cursor: pointer; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip.ghost { background: transparent; color: var(--ink-2); justify-self: start; }
+.chip.mono { font-family: var(--mono); font-weight: 500; font-size: 12.5px; }
+.tool-out { display: grid; gap: 6px; }
+.tool-out p { margin: 0; max-width: none; }
+.ct-q { margin: 0; font-size: 15px; color: var(--ink) !important; font-weight: 500; }
+.ct-t { font-weight: 600; color: var(--ink) !important; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.fields label { display: grid; gap: 4px; font-size: 12.5px; color: var(--ink-2); }
+.tool input { font: 500 15px var(--sans); color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+.tool input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+#dep-in { font-family: var(--mono); font-size: 14px; }
+.dep-v { font-weight: 600; }
+.dep-v.warn { color: var(--amber) !important; }
+.dep-v.ok { color: var(--green) !important; }
+.tool dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; font-size: 14px; }
+.tool dt { color: var(--ink-3); }
+.tool dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+tr[hidden] { display: none; }
+@media (max-width: 760px) { .fields { grid-template-columns: 1fr 1fr; } .tool dl { grid-template-columns: minmax(0, 1fr); } }
+
+/* Animated flows and live simulation */
+.dg .pk { stroke: #000; stroke-width: 1.5; }
+.pk-n { fill: #FFFFFF; } .pk-read, .pk-asr { fill: #4D8DFF; } .pk-dev { fill: #E0A93F; }
+.pk-write { fill: #4CC38A; } .pk-acc { fill: #33CCF0; } .pk-bad { fill: #F07A80; }
+.dg path.pulse { stroke-width: 2.6; transition: stroke-width .2s; }
+.dg .route { fill: none; stroke: #2B3644; stroke-width: 1.2; stroke-dasharray: 3 4; }
+.meter-track { fill: #16222F; } .meter-fill { fill: #4D8DFF; transition: width .15s linear; } .meter-fill.over { fill: #F07A80; }
+.meter-limit { stroke: #F07A80; stroke-width: 1.5; stroke-dasharray: 2 2; }
+#sim-gw { transition: fill .2s; } #sim-gw.hot { fill: #3A1418; stroke: #F07A80; }
+.animbar, .simbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-bottom: 10px; }
+.ainfo { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.sbtn.warn { border-color: var(--red); color: var(--red); }
+.sbtn.warn:hover { background: var(--red-soft); }
+.simspd { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.simspd input { width: 110px; accent-color: var(--accent); }
+.simspd span { font-variant-numeric: tabular-nums; min-width: 4.5em; }
+.simclk { margin-left: auto; font: 500 13px var(--mono); color: var(--ink); background: var(--surface); border-radius: 48px; padding: 6px 12px; }
+.simlog-w { padding-top: 10px; display: grid; gap: 8px; }
+.simlegend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-3); }
+.simlegend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.simlegend .pk-dev { background: #E0A93F; } .simlegend .pk-read { background: #4D8DFF; } .simlegend .pk-write { background: #4CC38A; }
+.simlegend .pk-acc { background: #33CCF0; } .simlegend .pk-bad { background: #F07A80; }
+.simlog { list-style: none; margin: 0; padding: 10px 14px; background: var(--surface); border-radius: 8px; display: grid; gap: 4px; font-size: 13px; color: var(--ink-2); min-height: 9.5em; }
+.simlog li { border-left: 3px solid var(--rule); padding-left: 8px; overflow-wrap: anywhere; }
+.simlog li b { font: 500 12px var(--mono); color: var(--ink-3); margin-right: 4px; }
+.simlog li.read { border-color: var(--accent); } .simlog li.write { border-color: var(--green); } .simlog li.dev { border-color: var(--amber); }
+.simlog li.acc { border-color: var(--cyan); } .simlog li.bad { border-color: var(--red); color: var(--ink); }
+
+/* Hero quick links and figure index */
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 28px; }
+.tiles a { display: grid; gap: 2px; text-decoration: none; background: #0B1622; border: 1px solid #2B3644; border-radius: 8px; padding: 14px 16px; color: #fff; }
+.tiles a:hover { border-color: #33CCF0; }
+.tiles b { font-size: 14.5px; font-weight: 600; } .tiles span { font-size: 13px; color: #B9C1C9; }
+.figidx { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.figidx a { display: grid; grid-template-columns: 6.5em minmax(0, 1fr) auto; gap: 12px; align-items: baseline; text-decoration: none; padding: 10px 14px; background: var(--surface); border-radius: 8px; color: var(--ink); }
+.figidx a:hover { outline: 1px solid var(--accent); }
+.fi-n { font: 500 12.5px var(--mono); color: var(--accent); } .fi-t { font-weight: 500; } .fi-s { font-size: 13px; color: var(--ink-3); }
+@media (max-width: 760px) { .tiles { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .figidx a { grid-template-columns: minmax(0, 1fr); gap: 2px; } .simclk { margin-left: 0; } }
+@media (max-width: 420px) { .tiles { grid-template-columns: minmax(0, 1fr); } }
+@media print { .animbar, .simbar, .stepbar { display: none; } }
+</style>
+
+<style>
+#rb .fields { grid-template-columns: 1fr 1fr 1fr 2fr; }
+#err-q { font-family: var(--mono); }
+.hero code { font-size: .9em; }
+.pb .chain li { font-size: 13.5px; }
+@media (max-width: 760px) { #rb .fields { grid-template-columns: 1fr 1fr; } }
+</style>
+</head><body>
+<header class="site"><div class="in">
+<a class="brand" href="#top"><b>Cisco<span>SE</span></b><small>Field reference</small></a>
+<nav aria-label="Guide parts"><a href="#overview" data-part="Foundations">Foundations</a><a href="#quickstart" data-part="Workflow">Workflow</a><a href="#suggestion" data-part="Companions">Companions</a><a href="#errors" data-part="Operate">Operate</a></nav>
+<button type="button" class="pill" id="theme-toggle">Theme: system</button>
+</div></header>
+<div class="hero" id="top"><div class="in">
+  <p class="eyebrow">Field guide · Automated Software Distribution API v4.0 · Cisco Support APIs</p>
+  <h1>Cisco Automated Software Distribution API</h1>
+  <p class="lead">Download Cisco software from a script instead of the website: get API access, find the right image for a device, clear any license gates, then fetch the file and verify its checksum. It also covers when Catalyst Center or Intersight should do the job instead.</p>
+  <p class="meta"><b>Scope:</b> ASD (Automated Software Distribution) v4.0 at <code style="background:#0B1622;color:#fff">apix.cisco.com/software/v4.0</code>, plus the companion Software Suggestion v2 and Product Information APIs.</p>
+  <div class="hbtns"><a class="hbtn solid" href="#usecases">Start with the use cases</a><a class="hbtn" href="#quickstart">Deploy in five steps</a></div>
+  <nav class="tiles" aria-label="Quick links">
+    <a href="#quickstart"><b>Deploy in five steps</b><span>From access to a scheduled job</span></a>
+    <a href="#builder"><b>Request builder</b><span>Fill in a PID, get the exact calls</span></a>
+    <a href="#client"><b>Python client</b><span>Tested end to end against a mock</span></a>
+    <a href="#errors"><b>Error lookup</b><span>Type a code, get the fix</span></a>
+    <a href="#choose"><b>Which path?</b><span>ASD direct, Catalyst Center or Intersight</span></a>
+    <a href="#usecases"><b>Use cases</b><span>Six customer playbooks</span></a>
+  </nav>
+</div></div>
+<div class="layout">
+<aside class="side" aria-label="Sections"><details open><summary>Contents</summary>
+<p class="nav-part">Foundations</p><ul><li><a href="#overview" data-part="Foundations">What ASD is</a></li><li><a href="#usecases" data-part="Foundations">Use cases</a></li><li><a href="#claimcheck" data-part="Foundations">Claim check</a></li><li><a href="#access" data-part="Foundations">Entitlement and onboarding</a></li><li><a href="#auth" data-part="Foundations">Authentication</a></li></ul>
+<p class="nav-part">Workflow</p><ul><li><a href="#quickstart" data-part="Workflow">Deploy in five steps</a></li><li><a href="#flow" data-part="Workflow">End-to-end flow</a></li><li><a href="#metadata" data-part="Workflow">Find images (metadata)</a></li><li><a href="#compliance" data-part="Workflow">EULA and K9</a></li><li><a href="#download" data-part="Workflow">Get the file</a></li><li><a href="#builder" data-part="Workflow">Request builder</a></li><li><a href="#client" data-part="Workflow">Python client</a></li></ul>
+<p class="nav-part">Companions</p><ul><li><a href="#suggestion" data-part="Companions">Software Suggestion v2</a></li><li><a href="#productinfo" data-part="Companions">Product Information</a></li><li><a href="#controllers" data-part="Companions">Catalyst Center and Intersight</a></li><li><a href="#choose" data-part="Companions">Which path?</a></li></ul>
+<p class="nav-part">Operate</p><ul><li><a href="#errors" data-part="Operate">Errors and exceptions</a></li><li><a href="#limits" data-part="Operate">Quotas and limits</a></li><li><a href="#quirks" data-part="Operate">Documentation quirks</a></li><li><a href="#checklist" data-part="Operate">Guidance checklist</a></li><li><a href="#figures" data-part="Operate">Figure index</a></li><li><a href="#sources" data-part="Operate">Sources</a></li></ul></details>
+<div class="legend"><div><span class="sw" style="background:var(--accent)"></span>Metadata call (read only)</div><div><span class="sw" style="background:var(--amber)"></span>Leaves Cisco's API tier (download servers)</div><div><span class="sw" style="background:var(--green)"></span>Lands in your environment</div></div></aside>
+<main>
+
+<section id="overview"><p class="eyebrow">Foundations</p><h2>What ASD is, and what it is not</h2>
+<p>ASD is one of the Cisco Support APIs: a REST (Representational State Transfer) API with JSON (JavaScript Object Notation) bodies that returns software metadata for a device and then a short-lived, per-session download URL for the image. It does what a person does on the software download site (pick a release, read the checksum, accept the license, click download), but from a script, a pipeline or an image-management tool.</p>
+<div class="stats">
+  <div><b>8</b><span>operations, all under <code>/software/v4.0</code></span></div>
+  <div><b>60 min</b><span>life of a <code>metadataTransId</code> and of a download URL</span></div>
+  <div><b>1–5</b><span>image GUIDs (Globally Unique Identifiers) per download call</span></div>
+  <div><b>3,600 s</b><span>default OAuth 2.0 access-token lifetime</span></div>
+</div>
+<figure class="fig" id="fig-0"><div class="fig-scroll"><svg viewBox="0 0 760 430" role="img" aria-label="Where ASD sits: your pipeline gets a token from id.cisco.com, calls ASD on apix.cisco.com, downloads from Cisco download servers into your repository" class="dg"><defs>
+<marker id="f0-n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-n"/></marker>
+<marker id="f0-read" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-read"/></marker>
+<marker id="f0-dev" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-dev"/></marker>
+<marker id="f0-write" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-write"/></marker>
+<marker id="f0-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-acc"/></marker></defs>
+<rect x="270" y="16" width="220" height="50" rx="8" class="b-n"/><text x="380" y="38" text-anchor="middle" class="t">Your pipeline or script</text><text x="380" y="55" text-anchor="middle" class="s">Python, Ansible, CI/CD job</text>
+<rect x="16" y="120" width="200" height="66" rx="8" class="b-acc"/><text x="116" y="142" text-anchor="middle" class="t">Cisco identity service</text><text x="116" y="159" text-anchor="middle" class="sm">id.cisco.com</text><text x="116" y="175" text-anchor="middle" class="s">OAuth 2.0 client credentials</text>
+<rect x="270" y="120" width="220" height="80" rx="8" class="b-read"/><text x="380" y="142" text-anchor="middle" class="t">ASD API v4.0</text><text x="380" y="160" text-anchor="middle" class="sm">apix.cisco.com/software/v4.0</text><text x="380" y="176" text-anchor="middle" class="s">metadata · compliance · download</text><text x="380" y="191" text-anchor="middle" class="s">entitlement checked per call</text>
+<rect x="544" y="120" width="200" height="80" rx="8" class="b-read"/><text x="644" y="142" text-anchor="middle" class="t">Companion Support APIs</text><text x="644" y="160" text-anchor="middle" class="s">Software Suggestion v2</text><text x="644" y="176" text-anchor="middle" class="s">Product Information</text><text x="644" y="191" text-anchor="middle" class="s">(which release, which MDF ID)</text>
+<rect x="270" y="250" width="220" height="66" rx="8" class="b-dev"/><text x="380" y="272" text-anchor="middle" class="t">Cisco download servers</text><text x="380" y="289" text-anchor="middle" class="s">sessionalized URL, 60 minutes</text><text x="380" y="305" text-anchor="middle" class="s">cloud store: one or more 302s</text>
+<rect x="270" y="356" width="220" height="58" rx="8" class="b-write"/><text x="380" y="379" text-anchor="middle" class="t">Your image repository</text><text x="380" y="397" text-anchor="middle" class="s">SHA-512 verified before use</text>
+<rect x="544" y="356" width="200" height="58" rx="8" class="b-n"/><text x="644" y="379" text-anchor="middle" class="t">Network devices</text><text x="644" y="397" text-anchor="middle" class="s">your upgrade tooling installs</text>
+<rect x="16" y="250" width="200" height="96" rx="8" class="b-off"/><text x="116" y="272" text-anchor="middle" class="t">Controllers fetch on their own</text><text x="116" y="292" text-anchor="middle" class="s">Catalyst Center: ccoSync and</text><text x="116" y="307" text-anchor="middle" class="s">images/{id}/download</text><text x="116" y="327" text-anchor="middle" class="s">Intersight: firmware repository</text>
+<path d="M300 66 L170 120" class="a-acc" marker-end="url(#f0-acc)"/><text x="214" y="88" text-anchor="middle" class="l">1 token</text>
+<path d="M380 66 V120" class="a-read" marker-end="url(#f0-read)"/><text x="388" y="98" class="l">2 Bearer calls</text>
+<path d="M470 66 L600 120" class="a-read dsh" marker-end="url(#f0-read)"/><text x="560" y="88" text-anchor="middle" class="l">optional</text>
+<path d="M380 200 V250" class="a-dev" marker-end="url(#f0-dev)"/><text x="388" y="230" class="l">3 download URL</text>
+<path d="M380 316 V356" class="a-write" marker-end="url(#f0-write)"/><text x="388" y="341" class="l">4 file + checksum</text>
+<path d="M490 385 H544" class="a-n" marker-end="url(#f0-n)"/>
+</svg></div><figcaption><b>Figure 0.</b> Where ASD sits. ASD never touches your devices: it hands your tooling a file and the checksum to verify it. Controllers such as Catalyst Center and Intersight have their own cisco.com connection and are covered under Companions.</figcaption></figure>
+<div class="uw"><div class="uw-y"><h4>Use ASD when</h4><ul><li>You run your own image repository or CI/CD (continuous integration and delivery) pipeline</li><li>You need checksums and release metadata in a CMDB (configuration management database) or compliance report</li><li>You build a tool for many platforms that no single controller manages</li></ul></div><div class="uw-n"><h4>Prefer something else when</h4><ul><li>The devices are already managed by Catalyst Center or Intersight: let the controller fetch the image</li><li>You only need to know which release to run: Software Suggestion v2 answers that without a download</li><li>The account has no SNTC or PSS entitlement: the calls will not be authorized</li></ul></div></div>
+</section>
+
+<section id="usecases"><p class="eyebrow">Foundations</p><h2>Use cases</h2>
+<p>Six ways customers put ASD to work. Each card says who runs it, how often, the steps and what the customer gets at the end. Start with the first one: it is the base the others build on.</p>
+<div class="pbs">
+<div class="pb"><h3>1. Keep an approved image repository current</h3><p class="pb-o">Who: network automation or platform team · Runs: nightly or weekly</p>
+<ol class="chain"><li>Choose targets (Software Suggestion or your standards)</li><li>Plan file of PIDs and targets</li><li>ASD metadata and download</li><li>SHA-512 check</li><li>File and .sha512 into the repository</li></ol>
+<p><b>Outcome:</b> every platform in the estate has its approved image on an internal server, already verified, before anyone opens a change. Script: <a href="#quickstart">asd_batch.py</a>.</p></div>
+<div class="pb"><h3>2. Build the upgrade kit for a change request</h3><p class="pb-o">Who: change owner or NOC (network operations center) · Runs: per change</p>
+<ol class="chain"><li><code>/metadata/pidrelease</code> for the affected PIDs</li><li>Collect release, size, SHA-512, minimum DRAM and flash</li><li>Add release-note and advisory links</li><li>Attach to the ticket</li></ol>
+<p><b>Outcome:</b> the change record carries the exact file, checksum and memory prerequisites, so reviewers approve against facts and engineers stage the same file that was approved.</p></div>
+<div class="pb"><h3>3. Audit images already in the field</h3><p class="pb-o">Who: security or compliance · Runs: monthly or after an incident</p>
+<ol class="chain"><li>Export image file names and hashes from inventory</li><li><code>/metadata/images</code>, five names per call</li><li>Compare SHA-512, flag <code>isDeleted</code></li><li>For advisories, <code>/metadata/pidimage</code> per PID</li></ol>
+<p><b>Outcome:</b> a report of devices running images Cisco has removed from download, any file whose hash does not match Cisco's published value and, from the per-PID call, images with a software advisory, deferral notice or PSIRT flag.</p></div>
+<div class="pb"><h3>4. Stage software for an air-gapped or high-security site</h3><p class="pb-o">Who: OT (operational technology), government or regulated sites · Runs: per release</p>
+<ol class="chain"><li>Download and verify in a connected zone</li><li>Carry file and .sha512 across the gap</li><li>Re-verify with <code>sha512sum -c</code> inside</li></ol>
+<p><b>Outcome:</b> a documented chain of custody: the hash checked on the inside is the hash Cisco published.</p></div>
+<div class="pb"><h3>5. Feed lifecycle data to other tools</h3><p class="pb-o">Who: CMDB, NetBox or ServiceNow owners · Runs: daily</p>
+<ol class="chain"><li>Metadata per PID</li><li>Store <code>isSuggested</code>, <code>lifeCycle</code>, <code>psirtIndicator</code>, advisories, <code>fcsDate</code></li><li>Join to inventory</li></ol>
+<p><b>Outcome:</b> dashboards that show which platforms are behind the suggested release or carry a security advisory, without anyone browsing the download site.</p></div>
+<div class="pb"><h3>6. Cover platforms no controller manages</h3><p class="pb-o">Who: teams with mixed estates (firewalls, routers, optics, appliances) · Runs: as needed</p>
+<p>Catalyst Center and Intersight fetch images for what they manage. ASD covers the rest with one workflow, so the repository and audit in use cases 1 and 3 can include every Cisco platform the contract covers.</p></div>
+</div>
+</section>
+<section id="claimcheck"><p class="eyebrow">Foundations</p><h2>Claim check: what circulating write-ups get wrong</h2>
+<p>A widely shared AI-generated summary of this API had the concept right and most of the specifics wrong. The table compares its claims with Cisco's v4.0 reference. If you inherited code or slides built from that summary, these are the places to fix.</p>
+<div class="tbl"><table><thead><tr><th>Claim in the summary</th><th>Verdict</th><th>What the v4.0 reference says</th></tr></thead><tbody>
+<tr><td>ASD is part of the Cisco Support APIs on DevNet</td><td><span class="bdg bdg-write">Correct</span></td><td>Listed first in the Support APIs portfolio.</td></tr>
+<tr><td>Token from <code>id.cisco.com/oauth2/default/v1/token</code>, client credentials grant</td><td><span class="bdg bdg-write">Correct</span></td><td>Same endpoint and grant. The older <code>cloudsso.cisco.com/as/token.oauth2</code> applies only to apps registered before 1 March 2023 and is being deprecated.</td></tr>
+<tr><td>Needs SNTC or PSS, registered in the API Console</td><td><span class="bdg bdg-write">Correct</span></td><td>Smart Net Total Care customers and Partner Support Service partners only; the API user also needs the API Developer role.</td></tr>
+<tr><td>"Internal Cisco engineering entitlements" grant access</td><td><span class="bdg" style="background:var(--red-soft);color:var(--red)">Unsupported</span></td><td>No Cisco documentation says so. The API Console does list an "Automated Software Distribution Preview-V3" entry (released 21 Nov 2024) with a Request Access button and no documentation; requests go to swc-it-support@cisco.com.</td></tr>
+<tr><td><code>GET /software/releases/v1/pid/{pid}</code></td><td><span class="bdg" style="background:var(--red-soft);color:var(--red)">Wrong</span></td><td><code>POST /software/v4.0/metadata/pidrelease</code> with a JSON body. The PID goes in the body, not the path.</td></tr>
+<tr><td><code>GET /software/image/v1/imageName/{name}</code></td><td><span class="bdg" style="background:var(--red-soft);color:var(--red)">Wrong</span></td><td><code>POST /metadata/pidimage</code> (PID plus 1–5 image names) or <code>POST /metadata/images</code> (names only).</td></tr>
+<tr><td><code>GET /software/download/v1/image/{name}/eulaAccept/true</code></td><td><span class="bdg" style="background:var(--red-soft);color:var(--red)">Wrong</span></td><td><code>POST /download/pidimage</code> with <code>pid</code>, <code>mdfId</code>, <code>imageGuids</code> and <code>metadataTransId</code>. EULA and K9 acceptance are separate <code>/compliance/eula</code> and <code>/compliance/k9</code> calls.</td></tr>
+<tr><td>Response <code>{"downloadUrl", "imageName", "expiryTime"}</code></td><td><span class="bdg" style="background:var(--red-soft);color:var(--red)">Wrong</span></td><td><code>downloads[]</code> entries with <code>url</code>, <code>token</code>, <code>imageGuid</code>, <code>imageName</code>, <code>exception[]</code>, plus a top-level <code>sessionId</code>. No expiry field; the URL lives 60 minutes.</td></tr>
+<tr><td>Checksums come with the image-details call</td><td><span class="bdg bdg-dev">Partly</span></td><td>MD5 and SHA-512 come from the three metadata calls, never from the download call.</td></tr>
+<tr><td>ASD returns Gold Star / suggested releases</td><td><span class="bdg bdg-dev">Partly</span></td><td>ASD flags <code>isSuggested</code> per release. Ranked suggestions come from the separate Software Suggestion v2 API.</td></tr>
+<tr><td>Catalyst Center <code>POST /dna/intent/api/v1/image/importation/source/cisco</code></td><td><span class="bdg" style="background:var(--red-soft);color:var(--red)">Wrong</span></td><td>No such path. Imports are <code>/image/importation/source/url</code> and <code>/source/file</code>; cisco.com images use <code>/images/ccoSync</code> then <code>/images/{id}/download</code>.</td></tr>
+<tr><td>Intersight <code>firmware/Distributables</code> and <code>firmware/Upgrades</code> also upgrade Nexus fabric</td><td><span class="bdg bdg-dev">Partly</span></td><td>Both objects exist and drive UCS (Unified Computing System) server and fabric-interconnect firmware. Nothing found supports Nexus switch upgrades through them.</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="access"><p class="eyebrow">Foundations</p><h2>Entitlement and onboarding</h2>
+<p>Access is gated twice: once to reach the API at all, and again on every download, against the contracts on the Cisco.com profile behind the app. Most failed ASD projects stall here, not in code.</p>
+<ol class="chain"><li>SNTC or PSS contract</li><li>API Developer role (CSAM)</li><li>Register app in API Console</li><li>Add "Automated Software Distribution"</li><li>Contracts on the Cisco.com profile</li><li>Software download access (ART)</li></ol>
+<div class="tbl"><table><thead><tr><th>Step</th><th>Customer (SNTC)</th><th>Partner (PSS)</th></tr></thead><tbody>
+<tr><td>1. Entitlement</td><td>Smart Net Total Care. Complete the SNTC portal onboarding guide.</td><td>Partner Support Service. The partner must hold at least one valid SNTC contract with the customer organization it acts for.</td></tr>
+<tr><td>2. API role</td><td>The company's Delegated Administrator grants the API Developer role in CSAM (Cisco Services Access Management).</td><td>Request access to PSS APIs and the API Console from the PSS community page, quoting a PSS contract number. A TAC engineer grants it; allow up to 48 hours.</td></tr>
+<tr><td>3. App registration</td><td colspan="2">Cisco API Console (<code>apiconsole.cisco.com</code>) &gt; My Apps &amp; Keys &gt; Register a New App &gt; OAuth 2.0 grant <b>Client Credentials</b> only &gt; select the Support APIs. The Client ID and Secret do not expire but can be regenerated; treat them like a password.</td></tr>
+<tr><td>4. ASD visible?</td><td colspan="2">ASD must appear under Select APIs on the Register a New App form before your app can be given access. If it is missing, the role or entitlement is not in place yet. The console's documentation list also has an "Automated Software Distribution Preview-V3" entry (released 21 Nov 2024, no documentation) with a Request Access button; ask swc-it-support@cisco.com which entry applies to you before requesting.</td></tr>
+<tr><td>5. Download entitlement</td><td colspan="2">Each registration carries the identity and permissions of the API user who created it. Images that need a contract return metadata but no URL until the contract is on that user's Cisco.com profile (Profile Manager).</td></tr>
+<tr><td>6. Software download access</td><td colspan="2">Contract-registered software can return <code>IAC_ERROR</code> until the user is granted Software Download Access through Cisco's ART access-request site (edsart.cloudapps.cisco.com): Cisco Service &gt; Connected Experience (CX) &gt; Delivery &amp; Tools Support &gt; Software Download and Special File Publishing Access.</td></tr>
+</tbody></table></div>
+<p class="note amber"><b>Use a dedicated Cisco.com identity for automation.</b> Downloads are authorized against the profile behind the app, so a personal login means the pipeline breaks when that person leaves or their contract associations change.</p>
+</section>
+
+<section id="auth"><p class="eyebrow">Foundations</p><h2>Authentication</h2>
+<p>One OAuth 2.0 client-credentials request returns a Bearer token that every Support API accepts. The token lasts 3,600 seconds by default; cache it and renew a few minutes early rather than per call.</p>
+<div class="code"><div class="code-h"><span>Shell · get an access token</span><button type="button" class="copy">Copy</button></div><pre><code>curl -s -X POST https://id.cisco.com/oauth2/default/v1/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=client_credentials" \
+  --data-urlencode "client_id=$CISCO_CLIENT_ID" \
+  --data-urlencode "client_secret=$CISCO_CLIENT_SECRET"
+
+# 200 OK
+# {"access_token": "Er2cdpFDGNsQ...", "token_type": "Bearer", "expires_in": 3599}</code></pre></div>
+<div class="tbl"><table><thead><tr><th>Item</th><th>Detail</th></tr></thead><tbody>
+<tr><td>Token endpoint</td><td><code>POST https://id.cisco.com/oauth2/default/v1/token</code>, form-encoded <code>grant_type</code>, <code>client_id</code>, <code>client_secret</code></td></tr>
+<tr><td>API host</td><td><code>apix.cisco.com</code>. Older posts and code use <code>api.cisco.com</code>, which was replaced in the same migration.</td></tr>
+<tr><td>Header</td><td><code>Authorization: Bearer &lt;access_token&gt;</code> and <code>Content-Type: application/json</code> for the POST bodies</td></tr>
+<tr><td>Legacy endpoint</td><td><code>cloudsso.cisco.com/as/token.oauth2</code>: apps registered before 1 March 2023 only, being deprecated. The API Console's Migrating Applications page says to re-register those apps (new Client ID and Secret), switch to the <code>id.cisco.com</code> token URL, and change <code>api.cisco.com</code> to <code>apix.cisco.com</code>.</td></tr>
+<tr><td>Download links</td><td>The same access token is appended to non-cloud download URLs as <code>&amp;access_token=</code>. Keep it out of logs.</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="quickstart"><p class="eyebrow">Workflow</p><h2>Deploy it in five steps</h2>
+<p>For a customer standing up ASD automation for the first time. Steps 1 and 2 are paperwork and can take a few days; steps 3 to 5 take an afternoon.</p>
+<div class="pbs">
+<div class="pb"><h3>Step 1 · Confirm access</h3><p>Check the customer has SNTC (or works through a PSS partner) and that the automation's Cisco.com identity has the API Developer role and the right contracts on its profile. See <a href="#access">Entitlement and onboarding</a>.</p><p class="pb-o">Done when: "Automated Software Distribution" is selectable on the API Console's Register a New App form.</p></div>
+<div class="pb"><h3>Step 2 · Register the app</h3><p>API Console &gt; My Apps &amp; Keys &gt; Register a New App. Application type <b>Service</b>, grant type <b>Client Credentials</b>, APIs: Automated Software Distribution and Software Suggestion API V2.</p><p class="pb-o">Done when: you have a Client ID and Client Secret.</p></div>
+<div class="pb"><h3>Step 3 · Store the secret and test one PID</h3><p>Put the ID and secret in the customer's secrets store (vault, CI variables), never in code. Run the <a href="#client">Python client</a> against one PID the customer owns.</p>
+<div class="code"><div class="code-h"><span>Shell · first test</span><button type="button" class="copy">Copy</button></div><pre><code>pip install requests
+export CISCO_CLIENT_ID=…  CISCO_CLIENT_SECRET=…
+python asd_client.py C9300-48P 17.9.4</code></pre></div>
+<p class="pb-o">Done when: the image downloads and prints "SHA-512 verified". If it prints exception codes instead, look them up in <a href="#errors">Errors and exceptions</a>.</p></div>
+<div class="pb"><h3>Step 4 · Write the plan file and run the batch</h3><p>One row per platform: the PID, the release it runs today, and the target. The batch script downloads each approved image once, verifies it, writes a <code>.sha512</code> file beside it, and prints a JSON report. It exits non-zero if anything was blocked or failed, so a scheduler can alert.</p>
+<div class="code"><div class="code-h"><span>CSV · plan.csv</span><button type="button" class="copy">Copy</button></div><pre><code>pid,current_release,target
+C9300-48P,17.9.4,latest
+C9500-48Y4C,17.9.4,17.12.6
+ISR4451-X/K9,17.6.5,above</code></pre></div>
+<div class="code"><div class="code-h"><span>Python 3 · asd_batch.py (same folder as asd_client.py)</span><button type="button" class="copy">Copy</button></div><pre><code># asd_batch.py: nightly refresh of an image repository from a plan file
+# plan.csv columns: pid,current_release,target   (target = latest | above | a release such as 17.12.6)
+import csv, json, os, sys, time
+from asd_client import ASDClient
+
+REPO = os.environ.get("ASD_REPO", "./images")
+os.makedirs(REPO, exist_ok=True)
+c = ASDClient(os.environ["CISCO_CLIENT_ID"], os.environ["CISCO_CLIENT_SECRET"])
+report = []
+
+for row in csv.DictReader(open(sys.argv[1])):
+    pid, cur, tgt = row["pid"], row["current_release"], row.get("target") or "latest"
+    try:
+        meta = c.metadata_by_release(pid, cur, tgt)
+        rows = list(c.images(meta))
+        ok = [r for r in rows if not r["exceptions"]]
+        if not ok:   # metadata came back, but every image is gated
+            report.append({"pid": pid, "status": "blocked",
+                           "codes": sorted({e for r in rows for e in r["exceptions"]})})
+            continue
+        pick = ok[0]
+        dest = os.path.join(REPO, pick["name"])
+        if os.path.exists(dest):
+            report.append({"pid": pid, "status": "already in repo", "image": pick["name"]}); continue
+        d = c.download_urls(pid, pick["mdfId"], [pick["guid"]], meta["metadataTransId"])
+        item = d["downloads"][0]
+        if item.get("exception"):
+            report.append({"pid": pid, "status": "blocked",
+                           "codes": [e.get("code") for e in item["exception"]]}); continue
+        sha = c.fetch(item, dest + ".part")
+        if pick["sha512"] and sha.lower() != pick["sha512"].lower():
+            os.remove(dest + ".part")
+            report.append({"pid": pid, "status": "checksum mismatch", "image": pick["name"]}); continue
+        os.rename(dest + ".part", dest)
+        with open(dest + ".sha512", "w") as f:
+            f.write(f'{pick["sha512"]}  {pick["name"]}\n')
+        report.append({"pid": pid, "status": "downloaded", "image": pick["name"], "release": pick["release"]})
+    except Exception as e:      # one bad PID must not stop the run
+        report.append({"pid": pid, "status": "error", "detail": str(e)[:200]})
+    time.sleep(2)               # stay well under the per-second limit
+
+print(json.dumps(report, indent=2))
+sys.exit(1 if any(r["status"] in ("blocked", "error", "checksum mismatch") for r in report) else 0)
+</code></pre></div>
+<p class="pb-o">Tested against the same local mock as the client: download, verification, and skip-if-present on a second run.</p></div>
+<div class="pb"><h3>Step 5 · Schedule it and watch the report</h3><p>Run nightly from cron or the CI system, keep the JSON report, and alert on <code>blocked</code>, <code>error</code> or <code>checksum mismatch</code>. Blocked usually means a contract, EULA or K9 action for a person, not a code fix.</p>
+<div class="code"><div class="code-h"><span>Shell · crontab entry (02:15 daily)</span><button type="button" class="copy">Copy</button></div><pre><code>15 2 * * * cd /opt/asd &amp;&amp; ASD_REPO=/srv/images python3 asd_batch.py plan.csv &gt; report-$(date +\%F).json 2&gt;&amp;1 || /opt/asd/alert.sh</code></pre></div>
+<p class="pb-o">Done when: a night's run leaves new images and a clean report, and a forced failure (a bad PID) raises an alert.</p></div>
+</div>
+</section>
+<section id="flow"><p class="eyebrow">Workflow</p><h2>End-to-end flow</h2>
+<p>From token to verified file: three API calls and a file download, plus one or two compliance calls if a license gate is open. Step through to see each request and response; the packet follows the call you select.</p>
+<figure class="fig" id="fig-1"><div class="fig-scroll"><svg viewBox="0 0 760 452" role="img" aria-label="Sequence: token, metadata, optional EULA or K9, download URL, file download, checksum" class="dg" id="seq"><defs>
+<marker id="f1-n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-n"/></marker>
+<marker id="f1-read" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-read"/></marker>
+<marker id="f1-dev" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-dev"/></marker>
+<marker id="f1-write" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-write"/></marker>
+<marker id="f1-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-acc"/></marker></defs>
+<line x1="95" y1="46" x2="95" y2="446" class="life"/><rect x="20" y="12" width="150" height="34" rx="8" class="b-n"/><text x="95" y="34" text-anchor="middle" class="t">Your client</text>
+<line x1="285" y1="46" x2="285" y2="446" class="life"/><rect x="210" y="12" width="150" height="34" rx="8" class="b-acc"/><text x="285" y="34" text-anchor="middle" class="t">id.cisco.com</text>
+<line x1="475" y1="46" x2="475" y2="446" class="life"/><rect x="400" y="12" width="150" height="34" rx="8" class="b-read"/><text x="475" y="34" text-anchor="middle" class="t">ASD API</text>
+<line x1="665" y1="46" x2="665" y2="446" class="life"/><rect x="590" y="12" width="150" height="34" rx="8" class="b-dev"/><text x="665" y="34" text-anchor="middle" class="t">Download server</text>
+<g class="st" data-i="0"><rect x="95" y="58" width="190" height="32" class="hit"/><path d="M99 80 H280" class="a-acc" marker-end="url(#f1-acc)"/><text x="190" y="73" text-anchor="middle" class="lm">POST /oauth2/default/v1/token</text></g>
+<g class="st" data-i="1"><rect x="95" y="96" width="190" height="32" class="hit"/><path d="M281 118 H100" class="a-acc dsh" marker-end="url(#f1-acc)"/><text x="190" y="111" text-anchor="middle" class="l">access_token · expires_in 3599</text></g>
+<g class="st" data-i="2"><rect x="95" y="134" width="380" height="32" class="hit"/><path d="M99 156 H470" class="a-read" marker-end="url(#f1-read)"/><text x="285" y="149" text-anchor="middle" class="lm">POST /metadata/pidrelease</text></g>
+<g class="st" data-i="3"><rect x="95" y="172" width="380" height="32" class="hit"/><path d="M471 194 H100" class="a-read dsh" marker-end="url(#f1-read)"/><text x="285" y="187" text-anchor="middle" class="l">metadataTransId · mdfId · imageGuid · sha512</text></g>
+<g class="st" data-i="4"><rect x="95" y="210" width="380" height="32" class="hit"/><path d="M99 232 H470" class="a-n dsh" marker-end="url(#f1-n)"/><text x="285" y="225" text-anchor="middle" class="lm">/compliance/eula · /compliance/k9 (if gated)</text></g>
+<g class="st" data-i="5"><rect x="95" y="248" width="380" height="32" class="hit"/><path d="M99 270 H470" class="a-read" marker-end="url(#f1-read)"/><text x="285" y="263" text-anchor="middle" class="lm">POST /download/pidimage</text></g>
+<g class="st" data-i="6"><rect x="95" y="286" width="380" height="32" class="hit"/><path d="M471 308 H100" class="a-read dsh" marker-end="url(#f1-read)"/><text x="285" y="301" text-anchor="middle" class="l">downloads[].url (60 min) · token · sessionId</text></g>
+<g class="st" data-i="7"><rect x="95" y="324" width="570" height="32" class="hit"/><path d="M99 346 H660" class="a-dev" marker-end="url(#f1-dev)"/><text x="380" y="339" text-anchor="middle" class="lm">GET url&amp;access_token=…  or  POST X-Authentication-Control=token</text></g>
+<g class="st" data-i="8"><rect x="95" y="362" width="570" height="32" class="hit"/><path d="M661 384 H100" class="a-dev dsh" marker-end="url(#f1-dev)"/><text x="380" y="377" text-anchor="middle" class="l">302 … 302 … 200 image bytes</text></g>
+<g class="st" data-i="9"><rect x="80" y="400" width="300" height="40" class="hit"/><path d="M99 408 h32 v18 h-28" class="a-write" marker-end="url(#f1-write)"/><text x="140" y="422" class="l">SHA-512 of file = sha512 from step 4</text></g>
+</svg></div><div class="stepbar" data-fig="seq" role="group" aria-label="Step through this flow"><button type="button" class="sbtn" data-act="prev">Back</button><button type="button" class="sbtn solid" data-act="next">Step through</button><button type="button" class="sbtn" data-act="all">Show all</button><span class="scount" aria-live="polite">All steps shown</span></div><div class="steppanel" data-fig="seq" aria-live="polite" hidden><p class="sp-t"></p><p class="sp-d"></p><pre class="sp-c"><code></code></pre></div><figcaption><b>Figure 1.</b> The full download sequence. Steps 3 to 6 must finish within 60 minutes, because the download call needs a live <code>metadataTransId</code>. Step 5 happens only when the metadata or download response asks for it.</figcaption></figure>
+</section>
+
+<section id="metadata"><p class="eyebrow">Workflow</p><h2>Find images: the three metadata calls <span class="bdg bdg-read">Read only</span></h2>
+<p>All three return the image names, sizes and checksums. The first two also return the <code>metadataTransId</code> and <code>mdfId</code> (Cisco's product catalog ID, from the Metadata Framework) that the download call needs. Pick the call by what you already know.</p>
+<div class="tbl"><table><thead><tr><th>Operation</th><th>You know</th><th>Body (fields as in Cisco's samples)</th><th>Returns a metadataTransId?</th></tr></thead><tbody>
+<tr><td><code>POST /software/v4.0/metadata/pidrelease</code></td><td>The PID and its current release</td><td><code>pid</code>, <code>currentReleaseVersion</code>, <code>outputReleaseVersion</code> (<code>latest</code>, <code>above</code> or a specific release), <code>pageIndex</code>, <code>perPage</code> (max 25)</td><td>Yes</td></tr>
+<tr><td><code>POST /software/v4.0/metadata/pidimage</code></td><td>The PID and the exact image file names</td><td><code>pid</code>, <code>imageNames</code> (array, 1–5), <code>pageIndex</code>, <code>perPage</code>. Unknown names come back in <code>invalidImages</code></td><td>Yes</td></tr>
+<tr><td><code>POST /software/v4.0/metadata/images</code></td><td>Only file names (for example from a device inventory)</td><td><code>imageNames</code> (array, 1–5)</td><td>No: status, dates, size and checksums only</td></tr>
+</tbody></table></div>
+<div class="code"><div class="code-h"><span>Request · metadata by PID and release</span><button type="button" class="copy">Copy</button></div><pre><code>POST https://apix.cisco.com/software/v4.0/metadata/pidrelease
+Authorization: Bearer &lt;access_token&gt;
+Content-Type: application/json
+
+{
+  "pid": "C9300-48P",
+  "currentReleaseVersion": "17.9.4",
+  "outputReleaseVersion": "latest",
+  "pageIndex": "1",
+  "perPage": "25"
+}</code></pre></div>
+<figure class="fig" id="fig-2"><div class="fig-scroll"><svg viewBox="0 0 760 388" role="img" aria-label="The metadata response is six levels deep: metadata, products, softwareTypes, operatingSystems, releases, images" class="dg"><defs>
+<marker id="f2-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk-acc"/></marker></defs>
+<rect x="16" y="14" width="420" height="48" rx="8" class="b-read"/><text x="30" y="34" class="t">metadata[ ]</text><text x="30" y="51" class="sm">pid</text>
+<rect x="44" y="72" width="420" height="48" rx="8" class="b-read"/><text x="58" y="92" class="t">products[ ]</text><text x="58" y="109" class="sm">mdfId · mdfConceptName</text>
+<rect x="72" y="130" width="420" height="48" rx="8" class="b-read"/><text x="86" y="150" class="t">softwareTypes[ ]</text><text x="86" y="167" class="sm">softwareTypeId · softwareTypeName</text>
+<rect x="100" y="188" width="420" height="48" rx="8" class="b-read"/><text x="114" y="208" class="t">operatingSystems[ ]</text><text x="114" y="225" class="sm">name</text>
+<rect x="128" y="246" width="420" height="48" rx="8" class="b-read"/><text x="142" y="266" class="t">releases[ ]</text><text x="142" y="283" class="sm">version · fcsDate · lifeCycle · isSuggested</text>
+<rect x="156" y="304" width="420" height="70" rx="8" class="b-acc"/><text x="170" y="324" class="t">images[ ]</text><text x="170" y="341" class="sm">imageGuid · name · size · md5 · sha512</text><text x="170" y="358" class="sm">encryptionSoftwareIndicator · exception[ ]</text>
+<rect x="596" y="14" width="148" height="88" rx="8" class="b-note"/><text x="670" y="36" text-anchor="middle" class="t">Top level</text><text x="670" y="54" text-anchor="middle" class="sm">metadataTransId</text><text x="670" y="70" text-anchor="middle" class="sm">pagination</text><text x="670" y="86" text-anchor="middle" class="sm">invalidImages[ ]</text>
+<rect x="596" y="190" width="148" height="100" rx="8" class="b-note"/><text x="670" y="212" text-anchor="middle" class="t">Download call</text><text x="670" y="230" text-anchor="middle" class="s">needs four values:</text><text x="670" y="248" text-anchor="middle" class="sm">pid · mdfId</text><text x="670" y="264" text-anchor="middle" class="sm">imageGuids</text><text x="670" y="280" text-anchor="middle" class="sm">metadataTransId</text>
+<path d="M464 96 C540 96 560 180 596 210" class="a-acc dsh" marker-end="url(#f2-acc)"/>
+<path d="M576 330 C600 330 620 310 650 292" class="a-acc dsh" marker-end="url(#f2-acc)"/>
+</svg></div><figcaption><b>Figure 2.</b> The metadata response tree. Flatten it to one row per image before deciding; the Python client below does this. The JSON samples use <code>name</code>, <code>size</code>, <code>version</code> and <code>lifeCycle</code> where the parameter tables say <code>imageName</code>, <code>imageSize</code>, <code>releaseVersion</code> and <code>lifecycle</code>: read both.</figcaption></figure>
+<div class="cards">
+  <div class="card c-read"><h4>Always inspect exception[ ]</h4><p>A metadata call can return HTTP 200 with an exception code on an image, such as <code>IMG_CONTRACT_REQD</code> or <code>IMG_K9</code>. The metadata is real, but no download URL will follow until the cause is fixed.</p></div>
+  <div class="card c-read"><h4>Signals worth storing</h4><p><code>isSuggested</code>, <code>lifeCycle</code>, <code>psirtIndicator</code> (Product Security Incident Response Team advisory attached), <code>softwareAdvisory</code>, <code>deferralNotice</code>, <code>isDeleted</code>, <code>additionalEntitlement</code>.</p></div>
+  <div class="card c-read"><h4>PID format</h4><p>One PID per call. Cisco's example shows a full UDI-style value (<code>ACS-1800-RM-19=VID:V01</code>); a base PID such as <code>C9300-48P</code> is the usual input. If you get <code>NO_DATA_FOUND_FOR_PID</code>, check the PID and try the base PID without suffixes.</p></div>
+</div>
+</section>
+
+<section id="compliance"><p class="eyebrow">Workflow</p><h2>EULA and K9 gates</h2>
+<p>Some images need a signed EULA, and strong-encryption images need the K9 export form. You read the current text with a GET and record acceptance with a POST. The gates show up as exception codes (<code>EULA_FORM_AR</code>, <code>K9_FORM_AR</code>, <code>K9_EULA_FORM_AR</code>, <code>K9_IMG_DWLD</code>) or as <code>eulaContent</code> and <code>k9Content</code> in the download response.</p>
+<div class="tbl"><table><thead><tr><th>Operation</th><th>Purpose</th><th>Body</th></tr></thead><tbody>
+<tr><td><code>GET /compliance/eula</code></td><td>Current EULA text, accept and decline values, <code>webForm</code> link, <code>subAppVersion</code></td><td>None</td></tr>
+<tr><td><code>POST /compliance/eula</code></td><td>Record acceptance or decline</td><td><code>status</code> (<code>Accepted</code> | <code>Declined</code>), <code>fileNames</code>, <code>declineComments</code> if declined</td></tr>
+<tr><td><code>GET /compliance/k9</code></td><td>K9 form fields and values, user details, <code>webForm</code> link</td><td>None</td></tr>
+<tr><td><code>POST /compliance/k9</code></td><td>Record the K9 answers</td><td><code>status</code>, <code>busFunction</code> (<code>COMM_OR_CIVIL</code>), <code>confirm</code> (<code>CONFIRM_CHECKED</code>), <code>govMilCountries</code>, <code>fileNames</code> (one), <code>declineComments</code> if declined</td></tr>
+</tbody></table></div>
+<p class="note amber"><b>These are legal attestations, not plumbing.</b> A POST to <code>/compliance/k9</code> certifies export-control answers for the organization, on behalf of the Cisco.com identity behind the app. Have the person entitled to make that statement accept it once, interactively (the <code>webForm</code> links to <code>software.cisco.com/download/k9</code> and <code>/eula</code>), and do not hard-code acceptance into an unattended pipeline. A rejected K9 (<code>K9_REJECTED</code>) is reviewed by Cisco; the documented retry window is about four hours.</p>
+</section>
+
+<section id="download"><p class="eyebrow">Workflow</p><h2>Get the file <span class="bdg bdg-dev">Leaves the API tier</span></h2>
+<p><code>POST /download/pidimage</code> turns up to five image GUIDs into sessionalized URLs. It returns no checksum: keep the SHA-512 from the metadata call.</p>
+<div class="code"><div class="code-h"><span>Request and response · download URLs</span><button type="button" class="copy">Copy</button></div><pre><code>POST https://apix.cisco.com/software/v4.0/download/pidimage
+Authorization: Bearer &lt;access_token&gt;
+Content-Type: application/json
+
+{
+  "pid": "ACS-1800-RM-19=",
+  "mdfId": "286305578",
+  "metadataTransId": "617462102359722937",
+  "imageGuids": ["25856C5890AE73F8EDBEEDA441EC901F8FC8362E"]
+}
+
+# 200 OK (abridged from Cisco's sample)
+{
+  "sessionId": "205785277984030082",
+  "downloads": [{
+    "url": "https://…/download.cgi?dwnld_code=…",
+    "token": "",
+    "imageGuid": "25856C5890AE73F8EDBEEDA441EC901F8FC8362E",
+    "imageName": "n9000-epld.7.0.3.I7.9.img",
+    "exception": []
+  }]
+}</code></pre></div>
+<div class="tbl"><table><thead><tr><th><code>token</code> field</th><th>Where the image is</th><th>How to fetch it</th></tr></thead><tbody>
+<tr><td>Empty</td><td>Default download server</td><td>Append <code>&amp;access_token=&lt;your API token&gt;</code> to <code>url</code> and request it (the guide's client uses GET).</td></tr>
+<tr><td>Set</td><td>Cisco cloud store</td><td><code>POST</code> to <code>url</code> with <code>Content-Type: application/x-www-form-urlencoded</code> and body <code>X-Authentication-Control=&lt;token&gt;</code>. Follow one or more HTTP 302 redirects.</td></tr>
+</tbody></table></div>
+<div class="code"><div class="code-h"><span>Shell · fetch and verify</span><button type="button" class="copy">Copy</button></div><pre><code># Default URL (token field empty)
+curl -fL -o "$IMAGE" "$URL&amp;access_token=$ACCESS_TOKEN"
+
+# Cloud URL (token field set): form POST, follow redirects
+curl -fL -o "$IMAGE" -X POST "$URL" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "X-Authentication-Control=$CLOUD_TOKEN"
+
+# Compare with the sha512 from the metadata call
+echo "$SHA512  $IMAGE" | sha512sum -c -</code></pre></div>
+<p class="note">Cisco's own cloud example passes <code>-k</code>, which turns off certificate checks. Leave it out and keep verification on: a software image is exactly what you do not want intercepted or swapped.</p>
+</section>
+
+<section id="builder"><p class="eyebrow">Workflow</p><h2>Request builder</h2>
+<p>Fill in what you know; the builder writes the matching calls with the body fields spelled as in Cisco's samples. Nothing leaves this page.</p>
+<div class="tool" id="rb">
+  <p class="tool-h">Your device and target</p>
+  <div class="fields">
+    <label>PID<input id="rb-pid" value="C9300-48P" autocomplete="off" spellcheck="false"></label>
+    <label>Current release<input id="rb-cur" value="17.9.4" autocomplete="off" spellcheck="false"></label>
+    <label>Target<input id="rb-out" value="latest" autocomplete="off" spellcheck="false" list="rb-opts"></label>
+    <label>Image names (optional, comma separated)<input id="rb-img" value="" placeholder="cat9k_iosxe.17.12.06.SPA.bin" autocomplete="off" spellcheck="false"></label>
+  </div>
+  <datalist id="rb-opts"><option value="latest"><option value="above"></datalist>
+  <p class="tool-note">Target is <code>latest</code>, <code>above</code>, or a specific release such as <code>17.12.6</code>. With image names, the builder uses <code>/metadata/pidimage</code> instead.</p>
+  <div class="chips" id="rb-tabs"><button type="button" class="chip" data-t="curl" aria-pressed="true">curl</button><button type="button" class="chip" data-t="py" aria-pressed="false">Python</button><button type="button" class="chip" data-t="json" aria-pressed="false">JSON bodies</button></div>
+  <div class="code"><div class="code-h"><span id="rb-label">Shell · generated</span><button type="button" class="copy">Copy</button></div><pre><code id="rb-out-code"></code></pre></div>
+</div>
+</section>
+
+<section id="client"><p class="eyebrow">Workflow</p><h2>Python client</h2>
+<p>A complete client: token caching with early renewal, the three metadata shapes flattened into rows, exception-aware selection, both download modes, streamed SHA-512 verification, and backoff on the 403 rate-limit responses ASD uses instead of 429. It was run end to end against a local mock of the documented request and response shapes (token, metadata, a K9-blocked image skipped, download URL, 302 redirect, checksum). It has not been run against Cisco's production API.</p>
+<div class="code"><div class="code-h"><span>Python 3 · asd_client.py (needs <code>requests</code>)</span><button type="button" class="copy">Copy</button></div><pre><code># asd_client.py: Cisco Automated Software Distribution (ASD) API v4.0 client
+# token cache, metadata lookup, EULA/K9 check, download URL, streamed download, SHA-512 check
+import hashlib, os, sys, time, requests
+
+TOKEN_URL = "https://id.cisco.com/oauth2/default/v1/token"
+ASD = os.environ.get("ASD_BASE", "https://apix.cisco.com/software/v4.0")
+
+class ASDClient:
+    def __init__(self, client_id, client_secret, token_url=TOKEN_URL, base=ASD):
+        self.cid, self.sec, self.token_url, self.base = client_id, client_secret, token_url, base
+        self.s = requests.Session(); self.tok = None; self.exp = 0
+
+    def token(self):
+        if time.time() &lt; self.exp:
+            return self.tok
+        r = self.s.post(self.token_url, data={"grant_type": "client_credentials",
+                        "client_id": self.cid, "client_secret": self.sec}, timeout=30)
+        r.raise_for_status(); j = r.json()
+        self.tok = j["access_token"]
+        self.exp = time.time() + int(j.get("expires_in", 3600)) - 300   # renew 5 min early
+        return self.tok
+
+    def post(self, path, body):
+        for attempt in range(4):
+            r = self.s.post(self.base + path, json=body, timeout=60,
+                            headers={"Authorization": f"Bearer {self.token()}"})
+            # The ASD error table reports rate and quota limits as 403, not 429
+            if r.status_code in (403, 429, 502, 503, 504) and attempt &lt; 3:
+                if r.status_code == 403 and "Rate" not in r.text and "Over" not in r.text:
+                    break                                  # a real permission error: stop
+                time.sleep(2 ** attempt * 5); continue
+            break
+        if r.status_code &gt;= 400:
+            raise RuntimeError(f"{path} -&gt; HTTP {r.status_code}: {r.text[:300]}")
+        return r.json()
+
+    @staticmethod
+    def images(meta):
+        """Flatten metadata -&gt; products -&gt; softwareTypes -&gt; operatingSystems -&gt; releases -&gt; images."""
+        for m in meta.get("metadata", []):
+            for p in m.get("products", []):
+                for st in p.get("softwareTypes", []):
+                    for os_ in st.get("operatingSystems", []):
+                        for rel in os_.get("releases", []):
+                            for img in rel.get("images", []):
+                                yield {"pid": m.get("pid"), "mdfId": p.get("mdfId"),
+                                       "release": rel.get("version") or rel.get("releaseVersion"),
+                                       "suggested": rel.get("isSuggested"),
+                                       "name": img.get("name") or img.get("imageName"),
+                                       "guid": img.get("imageGuid"),
+                                       "size": img.get("size") or img.get("imageSize"),
+                                       "sha512": img.get("sha512"), "md5": img.get("md5"),
+                                       "exceptions": [e.get("code") for e in img.get("exception", [])]}
+
+    def metadata_by_release(self, pid, current, output="latest", page=1):
+        # Field casing follows Cisco's sample request; the parameter table spells some differently
+        return self.post("/metadata/pidrelease", {"pid": pid, "currentReleaseVersion": current,
+                         "outputReleaseVersion": output, "pageIndex": str(page), "perPage": "25"})
+
+    def metadata_by_image(self, pid, image_names):
+        return self.post("/metadata/pidimage", {"pid": pid, "imageNames": image_names[:5],
+                         "pageIndex": "1", "perPage": "25"})
+
+    def accept(self, kind, file_name):
+        # kind is "eula" or "k9"; only call after reviewing the agreement with the right owner
+        body = {"status": "Accepted", "fileNames": file_name}
+        if kind == "k9":
+            body.update({"busFunction": "COMM_OR_CIVIL", "confirm": "CONFIRM_CHECKED"})
+        return self.post(f"/compliance/{kind}", body)
+
+    def download_urls(self, pid, mdf_id, guids, trans_id):
+        return self.post("/download/pidimage", {"pid": pid, "mdfId": str(mdf_id),
+                         "imageGuids": guids[:5], "metadataTransId": trans_id})
+
+    def fetch(self, item, dest):
+        """Stream one entry of downloads[] to disk; returns the SHA-512 of the bytes written."""
+        h = hashlib.sha512()
+        if item.get("token"):    # image is in Cisco's cloud store: form-encoded POST, follow 302s
+            r = self.s.post(item["url"], data={"X-Authentication-Control": item["token"]},
+                            stream=True, allow_redirects=True, timeout=600)
+        else:                    # default download URL: append the API access token
+            r = self.s.get(item["url"] + "&amp;access_token=" + self.token(),
+                           stream=True, allow_redirects=True, timeout=600)
+        r.raise_for_status()
+        with open(dest, "wb") as f:
+            for chunk in r.iter_content(1 &lt;&lt; 20):
+                f.write(chunk); h.update(chunk)
+        return h.hexdigest()
+
+if __name__ == "__main__":
+    pid, current = sys.argv[1], sys.argv[2]
+    c = ASDClient(os.environ["CISCO_CLIENT_ID"], os.environ["CISCO_CLIENT_SECRET"])
+    meta = c.metadata_by_release(pid, current, "latest")
+    trans = meta["metadataTransId"]                       # valid for 60 minutes
+    imgs = list(c.images(meta))
+    for i in imgs:
+        print(f'{i["release"]:&lt;14} {i["name"]:&lt;48} {i["size"]:&gt;12}  {",".join(i["exceptions"]) or "ok"}')
+    ok = [i for i in imgs if not i["exceptions"]]
+    if not ok:
+        sys.exit("No downloadable image: resolve the exception codes above first")
+    pick = ok[0]
+    d = c.download_urls(pid, pick["mdfId"], [pick["guid"]], trans)
+    item = d["downloads"][0]
+    if item.get("exception"):
+        sys.exit(f'Download blocked: {[e.get("code") for e in item["exception"]]}')
+    got = c.fetch(item, item["imageName"])
+    if pick["sha512"] and got.lower() != pick["sha512"].lower():
+        os.remove(item["imageName"]); sys.exit("SHA-512 mismatch: file deleted")
+    print(f'{item["imageName"]} downloaded and SHA-512 verified')
+</code></pre></div>
+<div class="code"><div class="code-h"><span>Shell · run it</span><button type="button" class="copy">Copy</button></div><pre><code>pip install requests
+export CISCO_CLIENT_ID=…  CISCO_CLIENT_SECRET=…
+python asd_client.py C9300-48P 17.9.4
+# 17.12.6        cat9k_iosxe.17.12.06.SPA.bin   …  ok
+# cat9k_iosxe.17.12.06.SPA.bin downloaded and SHA-512 verified</code></pre></div>
+</section>
+
+<section id="suggestion"><p class="eyebrow">Companions</p><h2>Software Suggestion v2: which release?</h2>
+<p>ASD says what exists and lets you download it. Software Suggestion says what Cisco recommends, based on stability, longevity, adoption rate and other factors. Use it first to choose the target, then hand the release to ASD. All operations are <code>GET</code> on <code>https://apix.cisco.com/software/suggestion/v2/suggestions/…</code>, with the same Bearer token, once the app has access to "Software Suggestion API V2".</p>
+<div class="tbl"><table><thead><tr><th>Path</th><th>Returns</th></tr></thead><tbody>
+<tr><td><code>/software/productIds/{productIds}</code></td><td>Suggested releases and their images for a list of PIDs</td></tr>
+<tr><td><code>/releases/productIds/{productIds}</code></td><td>Suggested releases without images</td></tr>
+<tr><td><code>/compatible/productId/{basePID}</code></td><td>Compatible and suggested releases for one PID, filterable by <code>currentImage</code>, <code>currentRelease</code>, <code>supportedFeatures</code></td></tr>
+<tr><td><code>/software/mdfIds/{mdfIds}</code>, <code>/releases/mdfIds/{mdfIds}</code>, <code>/compatible/mdfId/{mdfId}</code></td><td>The same three views keyed by MDF ID</td></tr>
+</tbody></table></div>
+<div class="code"><div class="code-h"><span>Shell · suggested releases for two PIDs</span><button type="button" class="copy">Copy</button></div><pre><code>curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
+  "https://apix.cisco.com/software/suggestion/v2/suggestions/releases/productIds/C9300-48P,C9500-48Y4C?pageIndex=1"</code></pre></div>
+<p class="note amber">Community threads report empty or wrong suggestions for some PIDs (retired platforms, some Nexus and Catalyst 9500 PIDs, and a 5508 wireless controller case). Treat a suggestion as input to a decision, and cross-check it against release notes and field notices before it drives an automated upgrade.</p>
+</section>
+
+<section id="productinfo"><p class="eyebrow">Companions</p><h2>Product Information: getting the MDF ID</h2>
+<p>The download call needs the <code>mdfId</code>. The metadata calls already return it, so you rarely need this, but the Product Information API maps PIDs to MDF IDs directly, which helps when you key a repository by MDF ID or call Software Suggestion by MDF ID.</p>
+<div class="code"><div class="code-h"><span>Shell · PID to MDF ID (up to 5 PIDs)</span><button type="button" class="copy">Copy</button></div><pre><code>curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
+  "https://apix.cisco.com/product/v1/information/product_ids_mdf/ASA5505-50-BUN-K9?page_index=1"
+# product_list[0].product_name_mdf   -> MDF ID of the product
+# product_list[0].product_series_mdf -> MDF ID of the series</code></pre></div>
+<p>Note the snake_case here (<code>page_index</code>, <code>product_list</code>) against camelCase in ASD and Software Suggestion: each Support API has its own naming.</p>
+</section>
+
+<section id="controllers"><p class="eyebrow">Companions</p><h2>Catalyst Center and Intersight</h2>
+<p>When a controller manages the devices, let it fetch and stage images through its own cisco.com connection; you automate the controller rather than ASD.</p>
+<div class="tbl"><table><thead><tr><th>Platform</th><th>Get images from cisco.com</th><th>Distribute and activate</th></tr></thead><tbody>
+<tr><td>Catalyst Center 2.3.7.x and 3.x</td><td><code>POST /dna/intent/api/v1/images/ccoSync</code> (rate limited; the spec lists 2 per hour), then <code>GET /dna/intent/api/v1/images?imported=false</code> to list them, then <code>POST /dna/intent/api/v1/images/{id}/download</code>. Cisco's Ansible SWIM (Software Image Management) workflow module supports cisco.com import from 2.3.7.6.</td><td>From 2.3.7.9, the <code>networkDeviceImages</code> family (readiness checks, bulk distribute and activate). The older <code>/image/distribution</code> and <code>/image/activation/device</code> still answer but were marked Sunset in 3.1.3. Local imports: <code>/image/importation/source/url</code> and <code>/source/file</code>.</td></tr>
+<tr><td>Intersight (UCS)</td><td>Firmware bundles come from the Intersight software repository; the API object is <code>firmware/Distributables</code>.</td><td><code>POST /api/v1/firmware/Upgrades</code> for servers; fabric-interconnect upgrades in Intersight Managed Mode. Scope is UCS servers and fabric interconnects.</td></tr>
+</tbody></table></div>
+<p>The SWIM details for Catalyst Center are in the companion Catalyst Center API field guide on CiscoSE.</p>
+</section>
+
+<section id="choose"><p class="eyebrow">Companions</p><h2>Which path?</h2>
+<div class="tool" id="pick"><p class="tool-h">What are you trying to do?</p>
+<div class="chips">
+<button type="button" class="chip" data-k="repo" aria-pressed="false">Fill our own image repository</button>
+<button type="button" class="chip" data-k="catc" aria-pressed="false">Upgrade a campus managed by Catalyst Center</button>
+<button type="button" class="chip" data-k="ucs" aria-pressed="false">Upgrade UCS servers</button>
+<button type="button" class="chip" data-k="pick" aria-pressed="false">Decide which release to run</button>
+<button type="button" class="chip" data-k="audit" aria-pressed="false">Audit images running in the field</button>
+</div>
+<div class="tool-out" aria-live="polite"><p class="ct-t" id="pick-t">Pick a goal</p><p id="pick-d">Each answer names the API, the calls and the catch.</p></div></div>
+</section>
+
+<section id="errors"><p class="eyebrow">Operate</p><h2>Errors and exceptions</h2>
+<p>ASD reports problems in two ways. HTTP errors (400, 401, 403, 5xx) mean the call itself failed. Exception codes inside a <b>200</b> response mean the call worked but this image cannot be downloaded yet. Code that only checks the status code will miss the second kind.</p>
+<div class="tool slim"><label class="tool-h" for="err-q">Look up a code or word</label><input id="err-q" placeholder="for example K9, contract, 403, MTRANSID" autocomplete="off" spellcheck="false"><p class="tool-note" id="err-n" aria-live="polite"></p></div>
+<div class="tbl"><table id="err-t"><thead><tr><th>Code</th><th>HTTP</th><th>Meaning</th><th>What to do</th></tr></thead><tbody>
+<tr><td><code>Not Authorized</code></td><td>403</td><td>Token invalid, or API key not recognized</td><td>Get a new token; check the app has ASD access in the API Console</td></tr>
+<tr><td><code>Account Over Queries Per Second Limit</code></td><td>403</td><td>Too many calls in one second</td><td>Back off and serialize; this is ASD's rate-limit signal, not 429</td></tr>
+<tr><td><code>Account Over Rate Limit</code></td><td>403</td><td>Too many calls in the quota period</td><td>Slow down; check usage under Keys in the API Console</td></tr>
+<tr><td><code>Account Inactive</code></td><td>403</td><td>Key not approved or disabled</td><td>Contact the Support API team</td></tr>
+<tr><td><code>PROD_REG_NA</code></td><td>401</td><td>Product must be registered and approved for the service</td><td>Email swc-it-support@cisco.com</td></tr>
+<tr><td><code>PROD_REG_AV</code></td><td>401</td><td>This client ID cannot call the service</td><td>Register a new client ID; contact swc-it-support@cisco.com</td></tr>
+<tr><td><code>DNAC_REG_REQ</code></td><td>401</td><td>App must be registered for the service</td><td>Contact swc-it-support@cisco.com</td></tr>
+<tr><td><code>SW_NO_LONGER_AVL</code></td><td>401</td><td>Software for this product is no longer available</td><td>Platform is retired from the download site</td></tr>
+<tr><td><code>INVALID_OUTPUT_RELEASE</code></td><td>401</td><td>Output release empty</td><td>Send <code>outputReleaseVersion</code></td></tr>
+<tr><td><code>PID_INVALID</code> · <code>PID_MISSING</code></td><td>400</td><td>PID invalid or absent</td><td>Check spelling and the <code>pid</code> field name</td></tr>
+<tr><td><code>NO_DATA_FOUND_FOR_PID</code></td><td>400</td><td>No software for that PID</td><td>Try the base PID; confirm on the download site</td></tr>
+<tr><td><code>CUR_REL_MISSING</code> · <code>OUT_REL_MISSING</code></td><td>400</td><td>Current or output release absent</td><td>Send both release fields</td></tr>
+<tr><td><code>IMG_NM_MISSING</code> · <code>IMG_NM_INVALID</code></td><td>400</td><td>Image names absent or invalid</td><td>Send <code>imageNames</code> as an array of exact file names</td></tr>
+<tr><td><code>IMAGE_LIMIT_EXCEEDED</code></td><td>400</td><td>Too many image names or GUIDs</td><td>Five per call</td></tr>
+<tr><td><code>MDFID_MISSING</code> · <code>MDFID_INVALID</code></td><td>400</td><td>MDF ID absent or invalid</td><td>Use <code>mdfId</code> from the same metadata response</td></tr>
+<tr><td><code>IMAGE_GUID_MISSING</code> · <code>IMAGE_GUID_INVALID</code></td><td>400</td><td>Image GUID absent or invalid</td><td>Use <code>imageGuid</code> from the same metadata response</td></tr>
+<tr><td><code>MTRANSID_MISSING</code> · <code>INVALID_MTRANSID</code></td><td>400</td><td>Transaction ID absent or invalid</td><td>Send <code>metadataTransId</code> from a metadata call</td></tr>
+<tr><td><code>MTRANSID_EXPIRED</code></td><td>400</td><td>Transaction ID older than 60 minutes</td><td>Re-run the metadata call, then download</td></tr>
+<tr><td><code>INVALID_INPUT</code></td><td>400</td><td>Invalid input or no data found</td><td>Validate the body against the Swagger file</td></tr>
+<tr><td><code>Service Not Found</code></td><td>596</td><td>Service missing, often spaces in parameters</td><td>Trim inputs</td></tr>
+<tr><td><code>SER_UNEXPECT_FAIL</code></td><td>500</td><td>Unexpected service failure</td><td>Retry later; report with the request data</td></tr>
+<tr><td><code>API Maintenance/Service Unavailable</code></td><td>503</td><td>Maintenance</td><td>Retry with backoff</td></tr>
+<tr><td><code>IMG_CONTRACT_REQD</code></td><td>200</td><td>Contract-registered image: metadata only, no URL</td><td>Add the covering contract to the Cisco.com profile (Profile Manager)</td></tr>
+<tr><td><code>CONTRACT_NOT_AUTH</code> · <code>CONTRACT_REJECTED</code></td><td>200</td><td>Contracts on the profile do not cover this product</td><td>Associate the right contract, or ask the account team or partner</td></tr>
+<tr><td><code>CONTRACT_LOGIN</code> · <code>CONTRACT_IMG_REQ</code> · <code>CONTRACT_REQ_DWLD</code> · <code>CONTRACT_REQD_DWLD</code> · <code>CONTRACT_IMG_DWLD</code></td><td>200</td><td>A valid service contract is required</td><td>Same as above</td></tr>
+<tr><td><code>IAC_ERROR</code> · <code>CONTRACT_ACCESS</code></td><td>200</td><td>No access to download contract-registered software</td><td>Request Software Download Access in ART</td></tr>
+<tr><td><code>IMG_K9</code></td><td>200</td><td>Strong-encryption image; download not approved</td><td>Complete the K9 form; questions to tradeopscpr@cisco.com</td></tr>
+<tr><td><code>K9_IMG_DWLD</code> · <code>K9_FORM_AR</code> · <code>K9_FORM_ACC</code></td><td>200</td><td>K9 form not yet accepted</td><td>Accept K9 (see EULA and K9 gates)</td></tr>
+<tr><td><code>EULA_FORM_AR</code> · <code>EULA_FORM_ACC</code> · <code>K9_EULA_FORM_AR</code></td><td>200</td><td>EULA (and possibly K9) not yet accepted</td><td>Accept EULA, then K9 if listed</td></tr>
+<tr><td><code>K9_REJECTED</code></td><td>200</td><td>K9 answers under review or rejected</td><td>Retry after about 4 hours; tradeopscpr@cisco.com</td></tr>
+<tr><td><code>IP_CHECK_FAIL</code></td><td>200</td><td>Request from a territory not authorized to receive Cisco products</td><td>Check egress location; tradeopscpr@cisco.com</td></tr>
+<tr><td><code>LOGIN_REQD</code> · <code>LOGIN_IMG_DWLD</code> · <code>LOGIN_CONTRACT_REQ</code></td><td>200</td><td>A Cisco.com login (with contract) is required</td><td>The identity behind the app lacks the profile setup</td></tr>
+<tr><td><code>CPR_ADDRESS_EXCEPTION_MSG</code></td><td>200</td><td>Profile is missing a full address</td><td>Complete the address in Profile Manager</td></tr>
+<tr><td><code>C3_USERID_NMAP</code></td><td>200</td><td>User ID not mapped in C3 (a Cisco back-end system)</td><td>Contact Cisco support</td></tr>
+<tr><td><code>SW_ADV_IMAGE</code> · <code>DEF_ADV_IMAGE</code></td><td>200</td><td>Software or deferral advisory on the image</td><td>Read the advisory before using the image</td></tr>
+<tr><td><code>DWLD_WARN</code> · <code>DWLD_WARN1</code> · <code>DWLD_WARN2</code></td><td>200</td><td>You may not be authorized for the product</td><td>Check contract coverage; ent-dl@cisco.com</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="limits"><p class="eyebrow">Operate</p><h2>Quotas and limits</h2>
+<div class="tbl"><table><thead><tr><th>Limit</th><th>Value</th><th>Source</th></tr></thead><tbody>
+<tr><td>Records per metadata page</td><td>25</td><td>ASD reference</td></tr>
+<tr><td>PIDs per metadata call</td><td>1</td><td>ASD reference</td></tr>
+<tr><td>Image names or GUIDs per call</td><td>1–5</td><td>ASD reference</td></tr>
+<tr><td><code>metadataTransId</code> and download URL life</td><td>60 minutes</td><td>ASD reference</td></tr>
+<tr><td>Access token life</td><td>3,600 seconds by default</td><td>Support APIs authentication page</td></tr>
+<tr><td>Calls per second and per day</td><td>Not in the ASD reference</td><td>The API Console's Register a New App form shows each API's limits next to its name; ASD's appear there once your account can select it. Exceeding them returns <b>403</b> (Over Queries Per Second, Over Rate Limit). Usage per key is under Keys.</td></tr>
+</tbody></table></div>
+<p class="note">For scale, the same form shows 5 per second and 60 per minute for the PSIRT openVuln API, and 10 per second and 5,000 per day for the CX Cloud APIs; community reports cite 5,000 per day for EoX (End of Life). None of these is an ASD number: design for a few calls per minute and cache metadata.</p>
+</section>
+
+<section id="quirks"><p class="eyebrow">Operate</p><h2>Documentation quirks</h2>
+<p>The v4.0 reference contradicts itself in places. Where it does, this guide follows the sample requests and recommends checking the Swagger YAML (downloadable from the API Console) for your account.</p>
+<div class="tbl"><table><thead><tr><th>Where</th><th>Table says</th><th>Sample uses</th></tr></thead><tbody>
+<tr><td><code>/metadata/pidrelease</code> request</td><td><code>PID</code>, <code>OutputReleaseVersion</code>, <code>perpage</code>, target <code>Latest</code></td><td><code>pid</code>, <code>outputReleaseVersion</code>, <code>perPage</code>, <code>latest</code></td></tr>
+<tr><td>Metadata responses</td><td><code>imageName</code>, <code>imageSize</code>, <code>releaseVersion</code>, <code>lifecycle</code>, <code>fieldNoticeUrl</code></td><td><code>name</code>, <code>size</code>, <code>version</code>, <code>lifeCycle</code>, <code>fieldNotice</code></td></tr>
+<tr><td><code>/metadata/images</code> request</td><td><code>imageNames</code> described as GUIDs</td><td>Image file names</td></tr>
+<tr><td><code>/compliance/k9</code> request</td><td><code>busfunction</code>, <code>confirm</code> = <code>Confirm_Checked</code>, <code>declineComments</code> typed int</td><td><code>busFunction</code>, <code>CONFIRM_CHECKED</code>, text</td></tr>
+<tr><td><code>/compliance/eula</code> request</td><td><code>declineComments</code> described as a download session ID</td><td>Free text</td></tr>
+<tr><td>Hosts in samples</td><td>—</td><td><code>api-stage.cisco.com</code> and <code>dl-stage.cisco.com</code> appear in <code>selfLink</code> and URLs: Cisco's stage environment. Production is <code>apix.cisco.com</code>.</td></tr>
+<tr><td>Older posts</td><td>—</td><td><code>api.cisco.com/software/…</code> and <code>cloudsso.cisco.com</code>: pre-2023 hosts</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="checklist"><p class="eyebrow">Operate</p><h2>Guidance checklist</h2><ol class="rules">
+<li><b>Confirm entitlement first:</b> SNTC or PSS, API Developer role, ASD visible in the API Console, contracts on the profile, ART software download access.</li>
+<li><b>Use a dedicated automation identity,</b> not a person's Cisco.com login.</li>
+<li><b>Cache the token</b> and renew it about five minutes before <code>expires_in</code>.</li>
+<li><b>Pick the target with Software Suggestion,</b> download with ASD.</li>
+<li><b>Check <code>exception[]</code> on every 200.</b> No URL follows until it is empty.</li>
+<li><b>Finish the download inside 60 minutes</b> of the metadata call; on <code>MTRANSID_EXPIRED</code> start again from metadata.</li>
+<li><b>Never automate K9 or EULA acceptance silently.</b> Have the accountable person accept once.</li>
+<li><b>Verify SHA-512 before an image enters the repository;</b> delete on mismatch.</li>
+<li><b>Keep TLS (Transport Layer Security) verification on</b> and keep tokens out of logs and URLs you store.</li>
+<li><b>Treat 403 as possibly a rate limit:</b> read the message, back off, retry a few times.</li>
+<li><b>Prefer the controller</b> when Catalyst Center or Intersight already manages the devices.</li>
+<li><b>Validate field names against the Swagger YAML</b> for your account before production.</li>
+</ol></section>
+
+<section id="figures"><p class="eyebrow">Operate</p><h2>Figure index</h2><ol class="figidx">
+<li><a href="#fig-0"><span class="fi-n">Figure 0</span><span class="fi-t">Where ASD sits</span><span class="fi-s">What ASD is</span></a></li>
+<li><a href="#fig-1"><span class="fi-n">Figure 1</span><span class="fi-t">End-to-end download sequence (step-through)</span><span class="fi-s">End-to-end flow</span></a></li>
+<li><a href="#fig-2"><span class="fi-n">Figure 2</span><span class="fi-t">Metadata response tree</span><span class="fi-s">Find images</span></a></li>
+</ol></section>
+
+<section id="sources"><p class="eyebrow">Operate</p><h2>Sources</h2><ol class="src">
+<li><a href="https://developer.cisco.com/docs/support-apis/automated-software-distribution/">Automated Software Distribution API reference (v4.0)</a>: all eight operations, error codes, cloud download</li>
+<li><a href="https://developer.cisco.com/docs/support-apis/introduction-to-cisco-support-apis/">Introduction to Cisco Support APIs</a>: portfolio</li>
+<li><a href="https://developer.cisco.com/docs/support-apis/user-onboarding-process/">Support APIs user onboarding process</a>: SNTC and PSS access</li>
+<li><a href="https://developer.cisco.com/docs/support-apis/application-registration/">Support APIs application registration</a>: API Console, client credentials</li>
+<li><a href="https://developer.cisco.com/docs/support-apis/authentication/">Support APIs authentication</a>: token endpoint and lifetime</li>
+<li><a href="https://developer.cisco.com/docs/support-apis/software-suggestion/">Software Suggestion API v2</a></li>
+<li><a href="https://developer.cisco.com/docs/support-apis/product-information/">Product Information API</a>: PID to MDF ID</li>
+<li><a href="https://community.cisco.com/t5/services-discussions/openvulnquery-authorization-issues/m-p/4811626">Cisco Community: legacy cloudsso endpoint for apps before 1 March 2023</a></li>
+<li><a href="https://community.cisco.com/t5/services-discussions/automated-software-distribution-api/m-p/5371226">Cisco Community: ASD takes the PID in the body (400 otherwise)</a></li>
+<li><a href="https://developer.cisco.com/docs/dna-center/initiates-sync-of-software-images-from-cisco-com">Catalyst Center: initiate sync of images from Cisco.com</a> and <a href="https://developer.cisco.com/docs/dna-center/download-the-software-image">download the software image</a></li>
+<li><a href="https://developer.cisco.com/docs/dna-center/swim/">Catalyst Center Software Image Management guide</a></li>
+<li><a href="https://docs.ansible.com/ansible/9/collections/cisco/dnac/swim_workflow_manager_module.html">Ansible swim_workflow_manager module</a>: cisco.com import from 2.3.7.6</li>
+<li><a href="https://www.cisco.com/c/en/us/td/docs/unified_computing/Intersight/b_Intersight_Managed_Mode_Configuration_Guide/m_review_map_firmware_management.html">Intersight Managed Mode: managing firmware</a></li>
+<li><a href="https://apiconsole.cisco.com/docs/read/overview/Migrating_Applications">Cisco API Console: Migrating Applications</a>: token URL and host changes</li>
+<li><a href="https://apiconsole.cisco.com/docs/read/external_apis/Automated_Software_Distribution_PreviewV3">Cisco API Console: Automated Software Distribution Preview-V3 listing</a> (sign-in required)</li>
+<li>Cisco API Console, Register a New App form: per-API rate limits (sign-in required)</li>
+</ol></section>
+</main></div>
+<footer class="site"><div class="in">
+  <p class="brandline">Cisco<span>SE</span> · Field reference</p>
+  <p>Built from the Cisco DevNet Automated Software Distribution API reference (v4.0), the Cisco Support APIs onboarding, registration and authentication guides, the Cisco API Console, and the Catalyst Center and Intersight documentation. Field names follow Cisco's sample requests; verify them against the Swagger YAML in your API Console before production use.</p>
+  <p>Not an official Cisco publication. Corrections are welcome as pull requests with the supporting document and release.</p>
+</div></footer>
+
+<script type="application/json" id="guide-data">{"steps": {"seq": [{"t": "Request a token", "d": "OAuth 2.0 client credentials against Cisco's identity service. The Client ID and Secret come from your app in the API Console.", "c": "POST https://id.cisco.com/oauth2/default/v1/token\nContent-Type: application/x-www-form-urlencoded\n\ngrant_type=client_credentials&client_id=<id>&client_secret=<secret>"}, {"t": "Receive the token", "d": "Cache it. The default lifetime is 3,600 seconds; renew a few minutes early instead of logging in per call.", "c": "200 OK\n{\"access_token\": \"Er2cdpFDGNsQ...\", \"token_type\": \"Bearer\", \"expires_in\": 3599}"}, {"t": "Ask for metadata", "d": "One PID per call, with the current release and the target (latest, above, or a specific release). Use /metadata/pidimage instead when you know the exact file names.", "c": "POST https://apix.cisco.com/software/v4.0/metadata/pidrelease\nAuthorization: Bearer <token>\n\n{\"pid\": \"C9300-48P\", \"currentReleaseVersion\": \"17.9.4\",\n \"outputReleaseVersion\": \"latest\", \"pageIndex\": \"1\", \"perPage\": \"25\"}"}, {"t": "Read the metadata", "d": "Keep four things: metadataTransId (valid 60 minutes), mdfId, imageGuid and sha512. Check exception[] on each image: a 200 can still carry a blocking code.", "c": "{\"metadataTransId\": \"45264903312820837\",\n \"metadata\": [{\"pid\": \"C9300-48P\", \"products\": [{\"mdfId\": \"…\",\n   \"softwareTypes\": [{\"operatingSystems\": [{\"releases\": [{\"version\": \"…\",\n     \"images\": [{\"imageGuid\": \"…\", \"name\": \"…\", \"sha512\": \"…\", \"exception\": []}]}]}]}]}]}]}"}, {"t": "Clear a license gate, only if asked", "d": "EULA_FORM_AR, K9_FORM_AR or K9_IMG_DWLD mean an agreement is open. Read it with GET, and have the accountable person accept it. These are legal attestations.", "c": "GET  /software/v4.0/compliance/eula\nPOST /software/v4.0/compliance/eula  {\"status\": \"Accepted\", \"fileNames\": \"<image>\"}\nGET  /software/v4.0/compliance/k9\nPOST /software/v4.0/compliance/k9    {\"status\": \"Accepted\", \"busFunction\": \"COMM_OR_CIVIL\", \"confirm\": \"CONFIRM_CHECKED\", …}"}, {"t": "Request download URLs", "d": "Up to five GUIDs for the same PID and MDF ID, with a metadataTransId that is still live.", "c": "POST https://apix.cisco.com/software/v4.0/download/pidimage\n\n{\"pid\": \"C9300-48P\", \"mdfId\": \"<mdfId>\",\n \"imageGuids\": [\"<imageGuid>\"], \"metadataTransId\": \"<id>\"}"}, {"t": "Read the download response", "d": "Each downloads[] entry has a sessionalized url (60 minutes), a token (set only for Cisco's cloud store) and its own exception[]. No checksum here.", "c": "{\"sessionId\": \"205785277984030082\",\n \"downloads\": [{\"url\": \"https://…/download.cgi?dwnld_code=…\", \"token\": \"\",\n   \"imageGuid\": \"…\", \"imageName\": \"…\", \"exception\": []}]}"}, {"t": "Fetch the file", "d": "Empty token: append your API access token to the URL. Token set: form-POST it as X-Authentication-Control. Keep certificate checks on.", "c": "curl -fL -o \"$IMAGE\" \"$URL&access_token=$TOKEN\"\n# or, cloud store\ncurl -fL -o \"$IMAGE\" -X POST \"$URL\" \\\n  -H 'Content-Type: application/x-www-form-urlencoded' \\\n  --data-urlencode \"X-Authentication-Control=$CLOUD_TOKEN\""}, {"t": "Follow redirects", "d": "Cisco documents one or more HTTP 302 Found redirects before the final URL. curl -L and requests both follow them.", "c": "302 Found  -> Location: …\n302 Found  -> Location: …\n200 OK     (image bytes)"}, {"t": "Verify the checksum", "d": "Compare SHA-512 with the value from the metadata call. On mismatch, delete the file and start again from metadata.", "c": "echo \"$SHA512  $IMAGE\" | sha512sum -c -\n# cat9k_iosxe.17.12.06.SPA.bin: OK"}]}, "pick": {"repo": ["ASD direct", "Software Suggestion v2 to choose the release, ASD /metadata/pidrelease and /download/pidimage to fetch it, SHA-512 check, then your repository. Catch: entitlement (SNTC or PSS, contracts on the automation identity's profile) and the 60-minute window."], "catc": ["Catalyst Center, not ASD", "POST /dna/intent/api/v1/images/ccoSync, list with GET /images?imported=false, then POST /images/{id}/download; upgrade with the networkDeviceImages family (2.3.7.9 and later). Catch: ccoSync is rate limited, and the older /image/distribution and /image/activation/device are Sunset from 3.1.3."], "ucs": ["Intersight", "Use the Intersight software repository (firmware/Distributables) and POST /api/v1/firmware/Upgrades for servers; fabric-interconnect upgrades in Intersight Managed Mode. Catch: the scope is UCS servers and fabric interconnects, not Nexus switches."], "pick": ["Software Suggestion v2", "GET /software/suggestion/v2/suggestions/releases/productIds/{pids}, or /compatible/productId/{pid}?currentRelease=… for an upgrade path. Catch: results can be empty or off for retired or some newer PIDs; cross-check release notes and field notices."], "audit": ["ASD /metadata/images", "POST up to five file names from your inventory to /software/v4.0/metadata/images for release date, isDeleted, size, MD5 and SHA-512. Catch: no metadataTransId, so this call cannot lead to a download."]}}</script>
+<script>
+(function(){
+function $(s, r){ return (r || document).querySelector(s); }
+function $$(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+
+/* Copy buttons */
+$$('.copy').forEach(function(b){
+  b.addEventListener('click', function(){
+    var t = b.closest('.code').querySelector('code').innerText;
+    var done = function(){ b.textContent = 'Copied'; setTimeout(function(){ b.textContent = 'Copy'; }, 1500); };
+    var sel = function(){ var r = document.createRange(); r.selectNodeContents(b.closest('.code').querySelector('code'));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Press Ctrl+C'; };
+    try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, sel); else sel(); } catch (e) { sel(); }
+  });
+});
+
+/* Theme */
+(function(){ var b = $('#theme-toggle'), r = document.documentElement, K = 'asd-theme', order = ['dark', 'light', 'system'];
+  function cur(){ return r.getAttribute('data-theme') || 'system'; }
+  function show(){ var c = cur(); b.textContent = 'Theme: ' + c; b.setAttribute('aria-label', 'Colour theme: ' + c + '. Select to change.'); }
+  try { var t = localStorage.getItem(K); if (t === 'dark' || t === 'light') r.setAttribute('data-theme', t); } catch (e) {}
+  b.addEventListener('click', function(){ var n = order[(order.indexOf(cur()) + 1) % 3];
+    if (n === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', n);
+    try { localStorage.setItem(K, n); } catch (e) {} show(); });
+  show(); })();
+
+/* Scrollspy */
+var links = $$('.side a'), tops = $$('header.site nav a');
+if ('IntersectionObserver' in window) {
+  var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting) {
+    links.forEach(function(a){ a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id); });
+    var on = $('.side a.on'), part = on ? on.getAttribute('data-part') : '';
+    tops.forEach(function(t){ t.setAttribute('aria-current', t.getAttribute('data-part') === part ? 'true' : 'false'); }); } }); },
+    {rootMargin: '-80px 0px -70% 0px'});
+  $$('section[id]').forEach(function(s){ io.observe(s); });
+}
+
+/* Packet along a path */
+var NS = 'http://www.w3.org/2000/svg', reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function packet(svg, path){
+  if (reduce || !path.getTotalLength) return;
+  var m = (path.getAttribute('class') || '').match(/a-(\w+)/), c = document.createElementNS(NS, 'circle');
+  c.setAttribute('r', '5'); c.setAttribute('class', 'pk pk-' + (m ? m[1] : 'n')); svg.appendChild(c);
+  var L = path.getTotalLength(), t0 = null;
+  function f(ts){ if (!t0) t0 = ts; var k = Math.min(1, (ts - t0) / 750), p = path.getPointAtLength(k * L);
+    c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); if (k < 1) requestAnimationFrame(f); else setTimeout(function(){ c.remove(); }, 150); }
+  requestAnimationFrame(f);
+}
+
+/* Step-through */
+var D = JSON.parse($('#guide-data').textContent);
+$$('.stepbar').forEach(function(bar){
+  var fid = bar.getAttribute('data-fig'), svg = document.getElementById(fid), data = D.steps[fid];
+  var steps = $$('.st', svg), panel = $('.steppanel[data-fig="' + fid + '"]'), count = $('.scount', bar), cur = -1;
+  function render(){
+    steps.forEach(function(s, i){ s.classList.toggle('dim', cur >= 0 && i !== cur); s.classList.toggle('cur', i === cur); });
+    if (cur < 0) { panel.hidden = true; count.textContent = 'All steps shown'; $('[data-act="next"]', bar).textContent = 'Step through'; return; }
+    var d = data[cur]; panel.hidden = false;
+    $('.sp-t', panel).textContent = (cur + 1) + '. ' + d.t; $('.sp-d', panel).textContent = d.d;
+    var pre = $('.sp-c', panel); pre.hidden = !d.c; $('code', pre).textContent = d.c || '';
+    count.textContent = 'Step ' + (cur + 1) + ' of ' + steps.length;
+    $('[data-act="next"]', bar).textContent = cur === steps.length - 1 ? 'Start again' : 'Next';
+    var p = steps[cur].querySelector('path'); if (p) packet(svg, p);
+  }
+  bar.addEventListener('click', function(e){ var b = e.target.closest('[data-act]'); if (!b) return; var a = b.getAttribute('data-act');
+    if (a === 'next') cur = cur >= steps.length - 1 ? 0 : cur + 1;
+    else if (a === 'prev') cur = cur <= 0 ? -1 : cur - 1; else cur = -1; render(); });
+  steps.forEach(function(s, i){ s.addEventListener('click', function(){ cur = i; render(); }); });
+  render();
+});
+
+/* Request builder */
+(function(){ var rb = $('#rb'); if (!rb) return; var tab = 'curl';
+  function v(id){ return $('#' + id).value.trim(); }
+  function q(s){ return JSON.stringify(s); }
+  function build(){
+    var pid = v('rb-pid') || 'C9300-48P', cur = v('rb-cur') || '17.9.4', out = v('rb-out') || 'latest';
+    var imgs = v('rb-img').split(',').map(function(s){ return s.trim(); }).filter(Boolean).slice(0, 5);
+    var path = imgs.length ? '/metadata/pidimage' : '/metadata/pidrelease';
+    var body = imgs.length ? {pid: pid, imageNames: imgs, pageIndex: '1', perPage: '25'}
+      : {pid: pid, currentReleaseVersion: cur, outputReleaseVersion: out, pageIndex: '1', perPage: '25'};
+    var dl = {pid: pid, mdfId: '<mdfId from metadata>', imageGuids: ['<imageGuid from metadata>'], metadataTransId: '<metadataTransId, under 60 min old>'};
+    var B = 'https://apix.cisco.com/software/v4.0', s;
+    if (tab === 'json') {
+      s = '// POST ' + B + path + '\n' + JSON.stringify(body, null, 2) + '\n\n// POST ' + B + '/download/pidimage\n' + JSON.stringify(dl, null, 2);
+    } else if (tab === 'py') {
+      s = 'from asd_client import ASDClient\nimport os\n\nc = ASDClient(os.environ["CISCO_CLIENT_ID"], os.environ["CISCO_CLIENT_SECRET"])\n' +
+        (imgs.length ? 'meta = c.metadata_by_image(' + q(pid) + ', ' + JSON.stringify(imgs) + ')\n'
+                     : 'meta = c.metadata_by_release(' + q(pid) + ', ' + q(cur) + ', ' + q(out) + ')\n') +
+        'rows = list(c.images(meta))\nfor r in rows:\n    print(r["release"], r["name"], r["exceptions"] or "ok")\n\n' +
+        'pick = next(r for r in rows if not r["exceptions"])\n' +
+        'd = c.download_urls(' + q(pid) + ', pick["mdfId"], [pick["guid"]], meta["metadataTransId"])\n' +
+        'sha = c.fetch(d["downloads"][0], d["downloads"][0]["imageName"])\nassert sha == pick["sha512"].lower()';
+    } else {
+      s = '# 1. Token\nTOKEN=$(curl -s -X POST https://id.cisco.com/oauth2/default/v1/token \\\n' +
+        '  --data-urlencode grant_type=client_credentials \\\n  --data-urlencode "client_id=$CISCO_CLIENT_ID" \\\n' +
+        '  --data-urlencode "client_secret=$CISCO_CLIENT_SECRET" | jq -r .access_token)\n\n' +
+        '# 2. Metadata (note metadataTransId, mdfId, imageGuid, sha512, exception)\n' +
+        "curl -s -X POST " + B + path + " \\\n  -H \"Authorization: Bearer $TOKEN\" -H 'Content-Type: application/json' \\\n  -d '" + JSON.stringify(body) + "' | jq .\n\n" +
+        '# 3. Download URL (within 60 minutes of step 2)\n' +
+        "curl -s -X POST " + B + "/download/pidimage \\\n  -H \"Authorization: Bearer $TOKEN\" -H 'Content-Type: application/json' \\\n" +
+        "  -d \"{\\\"pid\\\":" + q(pid).replace(/"/g, '\\"') + ",\\\"mdfId\\\":\\\"$MDF_ID\\\",\\\"imageGuids\\\":[\\\"$IMAGE_GUID\\\"],\\\"metadataTransId\\\":\\\"$TRANS_ID\\\"}\" | jq .downloads";
+    }
+    $('#rb-out-code').textContent = s;
+    $('#rb-label').textContent = tab === 'py' ? 'Python · uses asd_client.py below' : (tab === 'json' ? 'JSON · request bodies' : 'Shell · generated (needs jq)');
+  }
+  $$('input', rb).forEach(function(i){ i.addEventListener('input', build); });
+  $('#rb-tabs').addEventListener('click', function(e){ var b = e.target.closest('.chip'); if (!b) return; tab = b.getAttribute('data-t');
+    $$('.chip', $('#rb-tabs')).forEach(function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); build(); });
+  build();
+})();
+
+/* Which path */
+(function(){ var pk = $('#pick'); if (!pk) return;
+  pk.addEventListener('click', function(e){ var b = e.target.closest('.chip'); if (!b) return; var d = D.pick[b.getAttribute('data-k')];
+    $$('.chip', pk).forEach(function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    $('#pick-t').textContent = d[0]; $('#pick-d').textContent = d[1]; });
+})();
+
+/* Error lookup */
+(function(){ var inp = $('#err-q'), rows = $$('#err-t tbody tr'), n = $('#err-n');
+  function f(){ var q = inp.value.trim().toLowerCase(), k = 0;
+    rows.forEach(function(r){ var s = !q || r.textContent.toLowerCase().indexOf(q) >= 0; r.hidden = !s; if (s) k++; });
+    n.textContent = q ? k + ' of ' + rows.length + ' codes match' : rows.length + ' codes'; }
+  inp.addEventListener('input', f); f();
+})();
+})();
+
+</script>
+</body></html>
